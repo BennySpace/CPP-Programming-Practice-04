@@ -4,9 +4,9 @@
 #include "ApplicationState.h"
 #include "assets/AssetManager.h"
 #include "GameSession.h"
+#include "screens/ScreenInteractions.h"
 #include <SFML/Graphics.hpp>
 #include <string>
-#include <vector>
 
 class Application {
 public:
@@ -17,15 +17,19 @@ private:
     GameSession mGame;
     sf::RenderWindow mWindow;
     ApplicationState mUiState;
-    std::vector<UiButton> mButtons;
+    ScreenInteractions mScreenInteractions;
     AssetManager mAssets;
 
     void processEvents();
     void update(float pDeltaTime);
     void render();
-    void rebuildButtons();
+    void refreshScreenInteractions();
     void executeCommand(AppCommand pAction);
     void handleMouseClick(sf::Vector2f pMousePosition);
+    void applySelectionHotspot(const ScreenSelectionHotspot& pHotspot);
+    void closeApplication();
+    void openScreen(ApplicationScreen pScreen, const std::string& pBannerTitle, bool pResetSelection);
+    void returnToMainMenu(const std::string& pBannerTitle);
     void showBanner(const std::string& pTitle, const std::string& pMessage, bool pSuccess);
     void showBanner(const std::string& pTitle, bool pSuccess);
     void showRaceFeedback(const std::string& pLabel, bool pSuccess);

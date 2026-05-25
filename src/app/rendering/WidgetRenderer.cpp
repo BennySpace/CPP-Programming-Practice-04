@@ -110,7 +110,7 @@ void Application::drawWrapped(const std::string& text, const sf::Vector2f positi
 void Application::drawButtons() {
     using widget = app_layout::WidgetLayout;
 
-    for (const auto& currentButton : mButtons) {
+    for (const auto& currentButton : mScreenInteractions.mButtons) {
         drawPanel(
             currentButton.mRect,
             currentButton.mEnabled ? currentButton.mFill : sf::Color(62, 66, 76),

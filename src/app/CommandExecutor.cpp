@@ -5,25 +5,19 @@
 void Application::executeCommand(const AppCommand action) {
     switch (action) {
         case AppCommand::go_race:
-            mUiState.mScreen = ApplicationScreen::race_hub;
-            showBanner(app_text::kBannerRaceDeckTitle, true);
+            openScreen(ApplicationScreen::race_hub, app_text::kBannerRaceDeckTitle, false);
             return;
 
         case AppCommand::go_garage:
-            mUiState.mScreen = ApplicationScreen::garage;
-            mUiState.mSelectedInventoryIndex.reset();
-            showBanner(app_text::kBannerGarageTitle, true);
+            openScreen(ApplicationScreen::garage, app_text::kBannerGarageTitle, true);
             return;
 
         case AppCommand::go_museum:
-            mUiState.mScreen = ApplicationScreen::museum;
-            mUiState.mSelectedInventoryIndex.reset();
-            showBanner(app_text::kBannerMuseumHallTitle, true);
+            openScreen(ApplicationScreen::museum, app_text::kBannerMuseumHallTitle, true);
             return;
 
         case AppCommand::exit_app:
-            mGame.save();
-            mWindow.close();
+            closeApplication();
             return;
 
         case AppCommand::new_game:
@@ -46,10 +40,7 @@ void Application::executeCommand(const AppCommand action) {
             return;
 
         case AppCommand::back_main:
-            mUiState.mScreen = ApplicationScreen::main_menu;
-            mGame.leaveRace();
-            mUiState.mSelectedInventoryIndex.reset();
-            showBanner(app_text::kBannerHqOnlineTitle, true);
+            returnToMainMenu(app_text::kBannerHqOnlineTitle);
             return;
 
         case AppCommand::start_race: {
