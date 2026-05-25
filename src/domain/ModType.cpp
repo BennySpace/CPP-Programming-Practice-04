@@ -13,19 +13,6 @@ std::string to_code(const ModType pModType) {
     return "AW";
 }
 
-std::string to_short_label(const ModType pModType) {
-    switch (pModType) {
-        case ModType::aero_wing:
-            return "AERO";
-        case ModType::high_power:
-            return "POWER";
-        case ModType::wet_grip:
-            return "WET";
-    }
-
-    return "AERO";
-}
-
 std::string to_full_label(const ModType pModType) {
     switch (pModType) {
         case ModType::aero_wing:

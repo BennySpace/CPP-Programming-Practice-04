@@ -22,10 +22,6 @@ const std::vector<std::unique_ptr<Race>>& GameSession::races() const {
     return mRaces;
 }
 
-int GameSession::activeRaceIndex() const {
-    return mActiveRaceIndex;
-}
-
 const Race* GameSession::activeRace() const {
     if (mActiveRaceIndex < 0 || mActiveRaceIndex >= static_cast<int>(mRaces.size())) {
         return nullptr;

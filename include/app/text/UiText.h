@@ -19,7 +19,7 @@ inline constexpr const char* kNotFittedLabel = "NOT FITTED";
 inline constexpr const char* kMainMenuTitle = "START LIGHTS OUT. ALL SYSTEMS GO.";
 inline constexpr const char* kConfirmNewGameTitle = "START NEW GAME?";
 inline constexpr const char* kConfirmNewGameBody =
-    "THIS WILL ERASE CURRENT MONEY FUEL INVENTORY AND MUSEUM PROGRESS. ARE YOU SURE YOU WANT TO CONTINUE?";
+    "THIS WILL ERASE MONEY FUEL INVENTORY AND MUSEUM PROGRESS. CONTINUE?";
 
 inline constexpr const char* kRaceHubPitRadioTitle = "PIT RADIO";
 inline constexpr const char* kRaceHubAeroWing = "AERO WING";
@@ -44,7 +44,7 @@ inline constexpr const char* kMuseumDropOffTitle = "DONATION BAY";
 inline constexpr const char* kMuseumDropOffEmpty =
     "WIN LOOT TO DONATE.";
 inline constexpr const char* kMuseumMilestones = "REWARD TIERS";
-inline constexpr const char* kMuseumRewards = "REWARDS 180 320 520";
+inline constexpr const char* kMuseumRewards = "180 / 320 / 520 CREDITS";
 
 inline constexpr const char* kButtonConfirmReset = "RESET";
 inline constexpr const char* kButtonCancel = "CANCEL";

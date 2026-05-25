@@ -84,10 +84,6 @@ inline std::string repair_requires_credits(const int pCost) {
     return "Repair bay requires " + std::to_string(pCost) + " credits.";
 }
 
-inline std::string mod_restored_full_durability(const std::string& pLabel) {
-    return pLabel + " restored to full durability.";
-}
-
 inline std::string mod_repaired_for_next_stint(const std::string& pLabel, const int pDurability) {
     return pLabel + " patched up for the next stint. Durability now at " + std::to_string(pDurability) + ".";
 }

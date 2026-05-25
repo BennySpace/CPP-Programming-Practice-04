@@ -28,7 +28,6 @@ public:
     [[nodiscard]] PlayerProfile& player();
     [[nodiscard]] const PlayerProfile& player() const;
     [[nodiscard]] const std::vector<std::unique_ptr<Race>>& races() const;
-    [[nodiscard]] int activeRaceIndex() const;
     [[nodiscard]] const Race* activeRace() const;
 
     GameCommandResult startRace(size_t pRaceIndex);

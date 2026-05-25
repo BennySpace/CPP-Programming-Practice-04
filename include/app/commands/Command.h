@@ -27,14 +27,6 @@ enum class AppCommand {
     donate_selected
 };
 
-[[nodiscard]] inline bool is_drive_action(const AppCommand pAction) {
-    return pAction == AppCommand::drive_aero || pAction == AppCommand::drive_power || pAction == AppCommand::drive_wet;
-}
-
-[[nodiscard]] inline bool is_buy_mod_action(const AppCommand pAction) {
-    return pAction == AppCommand::buy_aero || pAction == AppCommand::buy_power || pAction == AppCommand::buy_wet;
-}
-
 [[nodiscard]] inline std::optional<ModType> mod_type_from_action(const AppCommand pAction) {
     if (pAction == AppCommand::drive_aero || pAction == AppCommand::buy_aero) {
         return ModType::aero_wing;

@@ -11,7 +11,6 @@ enum class ModType {
 };
 
 [[nodiscard]] std::string to_code(ModType pModType);
-[[nodiscard]] std::string to_short_label(ModType pModType);
 [[nodiscard]] std::string to_full_label(ModType pModType);
 [[nodiscard]] std::optional<ModType> try_mod_type_from_code(const std::string& pValue);
 
