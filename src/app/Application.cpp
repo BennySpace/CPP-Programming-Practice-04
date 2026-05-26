@@ -28,7 +28,7 @@ void Application::run() {
 void Application::processEvents() {
     while (const std::optional event = mWindow.pollEvent()) {
         if (event->is<sf::Event::Closed>()) {
-            closeApplication();
+            applyNavigation(app_navigation::exit_application());
             continue;
         }
 
@@ -40,11 +40,7 @@ void Application::processEvents() {
 
         if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
             if (keyPressed->code == sf::Keyboard::Key::Escape) {
-                if (mUiState.mScreen == ApplicationScreen::main_menu) {
-                    closeApplication();
-                } else {
-                    returnToMainMenu(app_text::kBannerReturnedTitle);
-                }
+                applyNavigation(app_navigation::handle_escape(mUiState));
             }
         }
     }
@@ -93,6 +89,21 @@ void Application::refreshScreenInteractions() {
     mScreenInteractions = build_screen_interactions(mGame, mUiState);
 }
 
+void Application::applyNavigation(const NavigationCommandResult& result) {
+    if (result.mLeaveRace) {
+        mGame.leaveRace();
+    }
+
+    if (result.mShowBanner) {
+        showBanner(result.mBannerTitle, result.mBannerMessage, result.mBannerSuccess);
+    }
+
+    if (result.mCloseWindow) {
+        mGame.save();
+        mWindow.close();
+    }
+}
+
 void Application::applySelectionHotspot(const ScreenSelectionHotspot& hotspot) {
     switch (hotspot.mKind) {
         case ScreenSelectionKind::race:
@@ -104,26 +115,6 @@ void Application::applySelectionHotspot(const ScreenSelectionHotspot& hotspot) {
     }
 
     showBanner(hotspot.mBannerTitle, hotspot.mBannerMessage, hotspot.mBannerSuccess);
-}
-
-void Application::closeApplication() {
-    mGame.save();
-    mWindow.close();
-}
-
-void Application::openScreen(const ApplicationScreen screen, const std::string& bannerTitle, const bool resetSelection) {
-    mUiState.mScreen = screen;
-    if (resetSelection) {
-        mUiState.mSelectedInventoryIndex.reset();
-    }
-    showBanner(bannerTitle, true);
-}
-
-void Application::returnToMainMenu(const std::string& bannerTitle) {
-    mUiState.mScreen = ApplicationScreen::main_menu;
-    mGame.leaveRace();
-    mUiState.mSelectedInventoryIndex.reset();
-    showBanner(bannerTitle, true);
 }
 
 void Application::showBanner(const std::string& title, const std::string& message, const bool success) {

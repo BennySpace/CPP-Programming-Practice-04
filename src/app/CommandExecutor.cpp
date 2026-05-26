@@ -5,42 +5,38 @@
 void Application::executeCommand(const AppCommand action) {
     switch (action) {
         case AppCommand::go_race:
-            openScreen(ApplicationScreen::race_hub, app_text::kBannerRaceDeckTitle, false);
+            applyNavigation(app_navigation::open_race_hub(mUiState));
             return;
 
         case AppCommand::go_garage:
-            openScreen(ApplicationScreen::garage, app_text::kBannerGarageTitle, true);
+            applyNavigation(app_navigation::open_garage(mUiState));
             return;
 
         case AppCommand::go_museum:
-            openScreen(ApplicationScreen::museum, app_text::kBannerMuseumHallTitle, true);
+            applyNavigation(app_navigation::open_museum(mUiState));
             return;
 
         case AppCommand::exit_app:
-            closeApplication();
+            applyNavigation(app_navigation::exit_application());
             return;
 
         case AppCommand::new_game:
-            mUiState.mConfirmingNewGame = true;
-            showBanner(app_text::kBannerConfirmResetTitle, false);
+            applyNavigation(app_navigation::begin_new_game_confirmation(mUiState));
             return;
 
         case AppCommand::confirm_new_game: {
             const PlayerCommandResult result = mGame.restart();
-            mUiState.mConfirmingNewGame = false;
-            mUiState.mScreen = ApplicationScreen::main_menu;
-            mUiState.mSelectedInventoryIndex.reset();
+            app_navigation::reset_to_main_menu(mUiState);
             showBanner(result.mTitle, result.mMessage, result.mSuccess);
             return;
         }
 
         case AppCommand::cancel_new_game:
-            mUiState.mConfirmingNewGame = false;
-            showBanner(app_text::kBannerResetCanceledTitle, true);
+            applyNavigation(app_navigation::cancel_new_game_confirmation(mUiState));
             return;
 
         case AppCommand::back_main:
-            returnToMainMenu(app_text::kBannerHqOnlineTitle);
+            applyNavigation(app_navigation::back_to_main_menu(mUiState));
             return;
 
         case AppCommand::start_race: {

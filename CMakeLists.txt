@@ -33,6 +33,7 @@ set(APP_SOURCES
     ${CMAKE_SOURCE_DIR}/src/app/CommandExecutor.cpp
     ${CMAKE_SOURCE_DIR}/src/app/InputHandling.cpp
     ${CMAKE_SOURCE_DIR}/src/app/screens/ScreenInteractions.cpp
+    ${CMAKE_SOURCE_DIR}/src/app/screens/ScreenNavigation.cpp
     ${CMAKE_SOURCE_DIR}/src/app/WindowIcon.cpp
     ${CMAKE_SOURCE_DIR}/src/app/rendering/BackgroundRenderer.cpp
     ${CMAKE_SOURCE_DIR}/src/app/rendering/GarageRenderer.cpp
