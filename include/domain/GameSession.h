@@ -5,6 +5,7 @@
 #include "PlayerProfile.h"
 #include "Race.h"
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -15,12 +16,19 @@ struct GameCommandResult {
     std::string mMessage;
 };
 
+struct SessionAlert {
+    bool mSuccess = false;
+    std::string mTitle;
+    std::string mMessage;
+};
+
 class GameSession {
 private:
     PlayerProfile mPlayer;
     std::vector<std::unique_ptr<Race>> mRaces;
     const std::string mSaveFile = "savegame.json";
     int mActiveRaceIndex = -1;
+    std::optional<SessionAlert> mPendingAlert;
 
 public:
     GameSession();
@@ -41,7 +49,8 @@ public:
     PlayerCommandResult donateLoot(size_t pInventoryIndex);
     PlayerCommandResult restart();
 
-    void save();
+    [[nodiscard]] bool save();
+    [[nodiscard]] std::optional<SessionAlert> consumePendingAlert();
 };
 
 #endif // GAME_SESSION_H

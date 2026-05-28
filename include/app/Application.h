@@ -29,6 +29,7 @@ private:
     void handleMouseClick(sf::Vector2f pMousePosition);
     void applyNavigation(const NavigationCommandResult& pResult);
     void applySelectionHotspot(const ScreenSelectionHotspot& pHotspot);
+    void showPendingSessionAlert();
     void showBanner(const std::string& pTitle, const std::string& pMessage, bool pSuccess);
     void showBanner(const std::string& pTitle, bool pSuccess);
     void showRaceFeedback(const std::string& pLabel, bool pSuccess);

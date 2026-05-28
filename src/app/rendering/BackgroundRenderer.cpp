@@ -72,4 +72,10 @@ void Application::drawStatusBar() {
 
     const sf::Color bannerColor = mUiState.mBanner.mSuccess ? sf::Color(168, 255, 180) : sf::Color(255, 170, 170);
     bitmap_text::draw_text(mWindow, mUiState.mBanner.mTitle, {layout::kBannerTitleX, layout::kBannerTitleY}, 3.0f, bannerColor);
+    drawWrapped(
+        mUiState.mBanner.mMessage,
+        {layout::kBannerTextX, layout::kBannerTextY},
+        1.7f,
+        layout::kBannerTextWidth,
+        sf::Color(232, 234, 238));
 }

@@ -79,6 +79,8 @@ inline constexpr const char* kBannerRaceCompleteTitle = "RACE COMPLETE";
 inline constexpr const char* kBannerRaceSelectedTitle = "RACE SELECTED";
 inline constexpr const char* kBannerItemSelectedTitle = "ITEM SELECTED";
 inline constexpr const char* kBannerDonationSlotTitle = "DONATION SLOT";
+inline constexpr const char* kBannerSaveFailedTitle = "SAVE FAILED";
+inline constexpr const char* kBannerLoadFailedTitle = "SAVE RECOVERY";
 
 inline constexpr const char* kFeedbackCleanStart = "CLEAN START";
 inline constexpr const char* kFeedbackRoughStart = "ROUGH START";
@@ -86,6 +88,18 @@ inline constexpr const char* kFeedbackEntryFailed = "ENTRY FAILED";
 inline constexpr const char* kFeedbackSectorCleared = "SECTOR CLEARED";
 inline constexpr const char* kFeedbackEmptyRun = "EMPTY RUN";
 inline constexpr const char* kFeedbackRunFailed = "RUN FAILED";
+
+inline std::string save_failed_message() {
+    return "Progress changed in memory, but savegame.json could not be updated.";
+}
+
+inline std::string load_invalid_message() {
+    return "savegame.json is damaged or incompatible. Default garage state loaded.";
+}
+
+inline std::string load_io_error_message() {
+    return "savegame.json could not be opened. Default garage state loaded.";
+}
 
 inline std::string format_labeled_value(const char* label, const int value) {
     return std::string(label) + " " + std::to_string(value);

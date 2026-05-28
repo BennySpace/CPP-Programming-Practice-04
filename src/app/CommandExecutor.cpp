@@ -28,6 +28,7 @@ void Application::executeCommand(const AppCommand action) {
             const PlayerCommandResult result = mGame.restart();
             app_navigation::reset_to_main_menu(mUiState);
             showBanner(result.mTitle, result.mMessage, result.mSuccess);
+            showPendingSessionAlert();
             return;
         }
 
@@ -42,6 +43,7 @@ void Application::executeCommand(const AppCommand action) {
         case AppCommand::start_race: {
             const GameCommandResult result = mGame.startRace(mUiState.mSelectedRace);
             showBanner(result.mTitle, result.mMessage, result.mSuccess && result.mHighlightSuccess);
+            showPendingSessionAlert();
             showRaceFeedback(
                 result.mSuccess
                     ? (result.mHighlightSuccess ? app_text::kFeedbackCleanStart : app_text::kFeedbackRoughStart)
@@ -60,6 +62,7 @@ void Application::executeCommand(const AppCommand action) {
 
             const RaceDriveResult result = mGame.driveActiveRace(*modType);
             showBanner(result.mTitle, result.mMessage, result.mSuccess && result.mFoundLoot);
+            showPendingSessionAlert();
             showRaceFeedback(
                 result.mSuccess
                     ? (result.mFoundLoot ? app_text::kFeedbackSectorCleared : app_text::kFeedbackEmptyRun)
@@ -71,11 +74,13 @@ void Application::executeCommand(const AppCommand action) {
         case AppCommand::leave_race:
             mGame.leaveRace();
             showBanner(app_text::kBannerRaceCompleteTitle, true);
+            showPendingSessionAlert();
             return;
 
         case AppCommand::buy_fuel: {
             const PlayerCommandResult result = mGame.buyFuel();
             showBanner(result.mTitle, result.mMessage, result.mSuccess);
+            showPendingSessionAlert();
             return;
         }
 
@@ -92,6 +97,7 @@ void Application::executeCommand(const AppCommand action) {
                 : (action == AppCommand::buy_power ? game_balance::kHighPowerModCost : game_balance::kWetGripModCost);
             const PlayerCommandResult result = mGame.buyMod(*modType, modCost);
             showBanner(result.mTitle, result.mMessage, result.mSuccess);
+            showPendingSessionAlert();
             return;
         }
 
@@ -99,6 +105,7 @@ void Application::executeCommand(const AppCommand action) {
             if (mUiState.mSelectedInventoryIndex.has_value()) {
                 const PlayerCommandResult result = mGame.sellLoot(*mUiState.mSelectedInventoryIndex);
                 showBanner(result.mTitle, result.mMessage, result.mSuccess);
+                showPendingSessionAlert();
                 if (result.mSuccess) {
                     mUiState.mSelectedInventoryIndex.reset();
                 }
@@ -109,6 +116,7 @@ void Application::executeCommand(const AppCommand action) {
             if (mUiState.mSelectedInventoryIndex.has_value()) {
                 const PlayerCommandResult result = mGame.repairMod(*mUiState.mSelectedInventoryIndex);
                 showBanner(result.mTitle, result.mMessage, result.mSuccess);
+                showPendingSessionAlert();
                 if (result.mSuccess) {
                     mUiState.mSelectedInventoryIndex.reset();
                 }
@@ -119,6 +127,7 @@ void Application::executeCommand(const AppCommand action) {
             if (mUiState.mSelectedInventoryIndex.has_value()) {
                 const PlayerCommandResult result = mGame.donateLoot(*mUiState.mSelectedInventoryIndex);
                 showBanner(result.mTitle, result.mMessage, result.mSuccess);
+                showPendingSessionAlert();
                 if (result.mSuccess) {
                     mUiState.mSelectedInventoryIndex.reset();
                 }

@@ -1,13 +1,20 @@
 #include "GameSession.h"
 #include "GameBalance.h"
 #include "DomainText.h"
+#include "text/UiText.h"
 #include "PlayerSaveRepository.h"
 #include "RaceFactory.h"
 #include <algorithm>
 
 GameSession::GameSession() {
-    PlayerSaveRepository::load(mPlayer, mSaveFile);
+    const PlayerSaveLoadStatus loadStatus = PlayerSaveRepository::load(mPlayer, mSaveFile);
     mRaces = race_factory::create_default_races();
+
+    if (loadStatus == PlayerSaveLoadStatus::invalid_data) {
+        mPendingAlert = {false, app_text::kBannerLoadFailedTitle, app_text::load_invalid_message()};
+    } else if (loadStatus == PlayerSaveLoadStatus::io_error) {
+        mPendingAlert = {false, app_text::kBannerLoadFailedTitle, app_text::load_io_error_message()};
+    }
 }
 
 PlayerProfile& GameSession::player() {
@@ -49,7 +56,7 @@ GameCommandResult GameSession::startRace(size_t pRaceIndex) {
     mActiveRaceIndex = static_cast<int>(pRaceIndex);
 
     const RaceEntryResult entryResult = selectedRace->apply_entry_effect(mPlayer);
-    save();
+    (void)save();
 
     return {
         true,
@@ -69,13 +76,13 @@ RaceDriveResult GameSession::driveActiveRace(const ModType pModType) {
     }
 
     RaceDriveResult result = mRaces[static_cast<size_t>(mActiveRaceIndex)]->drive(mPlayer, pModType);
-    save();
+    (void)save();
     return result;
 }
 
 void GameSession::leaveRace() {
     mActiveRaceIndex = -1;
-    save();
+    (void)save();
 }
 
 PlayerCommandResult GameSession::buyFuel() {
@@ -85,14 +92,14 @@ PlayerCommandResult GameSession::buyFuel() {
 
     mPlayer.spendMoney(game_balance::kFuelPackageCost);
     mPlayer.addFuel(game_balance::kFuelPackageUnits);
-    save();
+    (void)save();
     return {true, domain_text::kFuelRestockedTitle, domain_text::garage_reserves_increased(game_balance::kFuelPackageUnits)};
 }
 
 PlayerCommandResult GameSession::buyMod(const ModType pModType, const int pCost) {
     PlayerCommandResult result = mPlayer.buyMod(pModType, pCost);
     if (result.mSuccess) {
-        save();
+        (void)save();
     }
 
     return result;
@@ -101,7 +108,7 @@ PlayerCommandResult GameSession::buyMod(const ModType pModType, const int pCost)
 PlayerCommandResult GameSession::sellLoot(size_t pInventoryIndex) {
     PlayerCommandResult result = mPlayer.sellItem(pInventoryIndex);
     if (result.mSuccess) {
-        save();
+        (void)save();
     }
 
     return result;
@@ -115,7 +122,7 @@ PlayerCommandResult GameSession::repairMod(size_t pInventoryIndex) {
             : 0;
     PlayerCommandResult result = mPlayer.repairEquipment(pInventoryIndex, repairCost);
     if (result.mSuccess) {
-        save();
+        (void)save();
     }
 
     return result;
@@ -124,7 +131,7 @@ PlayerCommandResult GameSession::repairMod(size_t pInventoryIndex) {
 PlayerCommandResult GameSession::donateLoot(size_t pInventoryIndex) {
     PlayerCommandResult result = mPlayer.donateToMuseum(pInventoryIndex);
     if (result.mSuccess) {
-        save();
+        (void)save();
     }
 
     return result;
@@ -133,10 +140,22 @@ PlayerCommandResult GameSession::donateLoot(size_t pInventoryIndex) {
 PlayerCommandResult GameSession::restart() {
     mPlayer.resetProgress();
     mActiveRaceIndex = -1;
-    save();
+    (void)save();
     return {true, domain_text::kNewGameTitle, domain_text::new_game_reset()};
 }
 
-void GameSession::save() {
-    (void)PlayerSaveRepository::save(mPlayer, mSaveFile);
+bool GameSession::save() {
+    const PlayerSaveWriteStatus saveStatus = PlayerSaveRepository::save(mPlayer, mSaveFile);
+    if (saveStatus != PlayerSaveWriteStatus::success) {
+        mPendingAlert = {false, app_text::kBannerSaveFailedTitle, app_text::save_failed_message()};
+        return false;
+    }
+
+    return true;
+}
+
+std::optional<SessionAlert> GameSession::consumePendingAlert() {
+    std::optional<SessionAlert> alert = mPendingAlert;
+    mPendingAlert.reset();
+    return alert;
 }

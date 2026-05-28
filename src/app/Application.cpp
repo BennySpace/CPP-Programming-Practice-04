@@ -14,6 +14,7 @@ Application::Application()
     platform::apply_window_icon(mWindow);
     mWindow.setFramerateLimit(60);
     showBanner(app_text::kBannerGarageOnlineTitle, true);
+    showPendingSessionAlert();
 }
 
 void Application::run() {
@@ -99,9 +100,11 @@ void Application::applyNavigation(const NavigationCommandResult& result) {
     }
 
     if (result.mCloseWindow) {
-        mGame.save();
+        (void)mGame.save();
         mWindow.close();
     }
+
+    showPendingSessionAlert();
 }
 
 void Application::applySelectionHotspot(const ScreenSelectionHotspot& hotspot) {
@@ -126,6 +129,13 @@ void Application::showBanner(const std::string& title, const std::string& messag
 
 void Application::showBanner(const std::string& title, const bool success) {
     showBanner(title, "", success);
+}
+
+void Application::showPendingSessionAlert() {
+    const std::optional<SessionAlert> alert = mGame.consumePendingAlert();
+    if (alert.has_value()) {
+        showBanner(alert->mTitle, alert->mMessage, alert->mSuccess);
+    }
 }
 
 void Application::showRaceFeedback(const std::string& label, const bool success) {

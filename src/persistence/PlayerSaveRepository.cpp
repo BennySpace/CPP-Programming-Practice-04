@@ -28,10 +28,10 @@ bool replace_file(const std::string& pSource, const std::string& pDestination) {
 }
 }
 
-bool PlayerSaveRepository::save(const PlayerProfile& pPlayer, const std::string& pFilename) {
+PlayerSaveWriteStatus PlayerSaveRepository::save(const PlayerProfile& pPlayer, const std::string& pFilename) {
     json saveData;
     if (!PlayerSaveCodec::encode(pPlayer.toSaveData(), saveData)) {
-        return false;
+        return PlayerSaveWriteStatus::encode_error;
     }
 
     const std::string tempFilename = pFilename + ".tmp";
@@ -40,29 +40,33 @@ bool PlayerSaveRepository::save(const PlayerProfile& pPlayer, const std::string&
         {
             std::ofstream file(tempFilename, std::ios::trunc);
             if (!file.is_open()) {
-                return false;
+                return PlayerSaveWriteStatus::io_error;
             }
 
             file << saveData.dump(4);
             if (!file.good()) {
                 file.close();
                 std::filesystem::remove(tempFilename);
-                return false;
+                return PlayerSaveWriteStatus::io_error;
             }
         }
 
-        return replace_file(tempFilename, pFilename);
+        return replace_file(tempFilename, pFilename)
+            ? PlayerSaveWriteStatus::success
+            : PlayerSaveWriteStatus::io_error;
     } catch (const std::exception&) {
         std::error_code ignoredError;
         std::filesystem::remove(tempFilename, ignoredError);
-        return false;
+        return PlayerSaveWriteStatus::io_error;
     }
 }
 
-bool PlayerSaveRepository::load(PlayerProfile& pPlayer, const std::string& pFilename) {
+PlayerSaveLoadStatus PlayerSaveRepository::load(PlayerProfile& pPlayer, const std::string& pFilename) {
     std::ifstream file(pFilename);
     if (!file.is_open()) {
-        return false;
+        return std::filesystem::exists(pFilename)
+            ? PlayerSaveLoadStatus::io_error
+            : PlayerSaveLoadStatus::missing_file;
     }
 
     try {
@@ -71,15 +75,15 @@ bool PlayerSaveRepository::load(PlayerProfile& pPlayer, const std::string& pFile
 
         PlayerSaveData loadedData;
         if (!PlayerSaveCodec::decode(saveData, loadedData)) {
-            return false;
+            return PlayerSaveLoadStatus::invalid_data;
         }
 
         pPlayer.applySaveData(loadedData);
     } catch (const json::exception&) {
-        return false;
+        return PlayerSaveLoadStatus::invalid_data;
     } catch (const std::exception&) {
-        return false;
+        return PlayerSaveLoadStatus::io_error;
     }
 
-    return true;
+    return PlayerSaveLoadStatus::success;
 }
