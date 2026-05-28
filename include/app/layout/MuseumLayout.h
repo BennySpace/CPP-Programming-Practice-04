@@ -99,16 +99,20 @@ struct MuseumLayout {
         return make_rect(kMilestonePanelX, kMilestonePanelY, kMilestonePanelWidth, kMilestonePanelHeight);
     }
 
+    static sf::FloatRect first_exhibit_card_rect() {
+        return make_rect(kExhibitCardX, kExhibitCardStartY, kExhibitCardWidth, kExhibitCardHeight);
+    }
+
     static sf::FloatRect exhibit_card(const size_t index) {
-        const float column = static_cast<float>(index % 3);
-        const float row = static_cast<float>(index / 3);
-        return make_rect(kExhibitCardX + column * kExhibitCardStepX, kExhibitCardStartY + row * kExhibitCardStepY, kExhibitCardWidth, kExhibitCardHeight);
+        return grid_rect(first_exhibit_card_rect(), index, 3, kExhibitCardStepX, kExhibitCardStepY);
+    }
+
+    static sf::FloatRect first_drop_card_rect() {
+        return make_rect(kDropCardX, kDropCardStartY, kDropCardWidth, kDropCardHeight);
     }
 
     static sf::FloatRect drop_card(const size_t index) {
-        const float column = static_cast<float>(index % 4);
-        const float row = static_cast<float>(index / 4);
-        return make_rect(kDropCardX + column * kDropCardStepX, kDropCardStartY + row * kDropCardStepY, kDropCardWidth, kDropCardHeight);
+        return grid_rect(first_drop_card_rect(), index, 4, kDropCardStepX, kDropCardStepY);
     }
 
     static sf::FloatRect donate_button_rect() {

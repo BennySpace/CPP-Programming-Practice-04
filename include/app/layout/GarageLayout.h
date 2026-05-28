@@ -108,10 +108,12 @@ struct GarageLayout {
         return make_rect(kSelectedPanelX, kSelectedPanelY, kSelectedPanelWidth, kSelectedPanelHeight);
     }
 
+    static sf::FloatRect first_inventory_card_rect() {
+        return make_rect(kInventoryCardX, kInventoryCardStartY, kInventoryCardWidth, kInventoryCardHeight);
+    }
+
     static sf::FloatRect inventory_card(const size_t index) {
-        const float column = static_cast<float>(index % 4);
-        const float row = static_cast<float>(index / 4);
-        return make_rect(kInventoryCardX + column * kInventoryCardStepX, kInventoryCardStartY + row * kInventoryCardStepY, kInventoryCardWidth, kInventoryCardHeight);
+        return grid_rect(first_inventory_card_rect(), index, 4, kInventoryCardStepX, kInventoryCardStepY);
     }
 
     static sf::FloatRect selected_card_rect() {

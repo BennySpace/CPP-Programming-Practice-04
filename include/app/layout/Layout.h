@@ -9,6 +9,24 @@ inline sf::FloatRect make_rect(const float x, const float y, const float width, 
     return {{x, y}, {width, height}};
 }
 
+inline sf::FloatRect offset_rect(const sf::FloatRect& pRect, const float pOffsetX, const float pOffsetY) {
+    return {{
+        pRect.position.x + pOffsetX,
+        pRect.position.y + pOffsetY
+    }, pRect.size};
+}
+
+inline sf::FloatRect grid_rect(
+    const sf::FloatRect& pFirstRect,
+    const size_t pIndex,
+    const size_t pColumnCount,
+    const float pStepX,
+    const float pStepY) {
+    const float column = static_cast<float>(pIndex % pColumnCount);
+    const float row = static_cast<float>(pIndex / pColumnCount);
+    return offset_rect(pFirstRect, column * pStepX, row * pStepY);
+}
+
 struct WidgetLayout {
     static constexpr float kPanelAccentBarHeight = 8.0f;
 
