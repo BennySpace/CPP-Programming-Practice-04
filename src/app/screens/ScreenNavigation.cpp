@@ -23,7 +23,7 @@ NavigationCommandResult open_screen(
     return make_banner_result(pBannerTitle, true);
 }
 
-NavigationCommandResult back_to_main_menu(
+NavigationCommandResult navigate_to_main_menu(
     ApplicationState& pUiState,
     const std::string& pBannerTitle,
     const bool pLeaveRace) {
@@ -48,7 +48,7 @@ NavigationCommandResult handle_escape(ApplicationState& pUiState) {
         return exit_application();
     }
 
-    return back_to_main_menu(pUiState, app_text::kBannerReturnedTitle, true);
+    return navigate_to_main_menu(pUiState, app_text::kBannerReturnedTitle, true);
 }
 
 NavigationCommandResult open_race_hub(ApplicationState& pUiState) {
@@ -64,7 +64,7 @@ NavigationCommandResult open_museum(ApplicationState& pUiState) {
 }
 
 NavigationCommandResult back_to_main_menu(ApplicationState& pUiState) {
-    return ::back_to_main_menu(pUiState, app_text::kBannerHqOnlineTitle, true);
+    return navigate_to_main_menu(pUiState, app_text::kBannerHqOnlineTitle, true);
 }
 
 NavigationCommandResult begin_new_game_confirmation(ApplicationState& pUiState) {
