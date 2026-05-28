@@ -85,6 +85,32 @@ target_include_directories(Formula_One_Simulator_2 PRIVATE
     ${CMAKE_SOURCE_DIR}/include/ui
     ${CMAKE_SOURCE_DIR}/resources
 )
+
+if (MSVC AND CMAKE_GENERATOR MATCHES "Ninja")
+    get_filename_component(PROJECT_MSVC_BIN_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
+    get_filename_component(PROJECT_MSVC_ROOT_DIR "${PROJECT_MSVC_BIN_DIR}/../../.." ABSOLUTE)
+
+    set(PROJECT_WINDOWS_SDK_ROOT_DIR "$ENV{ProgramFiles\(x86\)}/Windows Kits/10")
+    file(GLOB PROJECT_WINDOWS_SDK_INCLUDE_DIRS LIST_DIRECTORIES true "${PROJECT_WINDOWS_SDK_ROOT_DIR}/include/*")
+    list(SORT PROJECT_WINDOWS_SDK_INCLUDE_DIRS COMPARE NATURAL ORDER DESCENDING)
+    list(GET PROJECT_WINDOWS_SDK_INCLUDE_DIRS 0 PROJECT_WINDOWS_SDK_VERSION_DIR)
+    get_filename_component(PROJECT_WINDOWS_SDK_VERSION "${PROJECT_WINDOWS_SDK_VERSION_DIR}" NAME)
+
+    target_include_directories(Formula_One_Simulator_2 SYSTEM PRIVATE
+        "${PROJECT_MSVC_ROOT_DIR}/include"
+        "${PROJECT_WINDOWS_SDK_ROOT_DIR}/include/${PROJECT_WINDOWS_SDK_VERSION}/ucrt"
+        "${PROJECT_WINDOWS_SDK_ROOT_DIR}/include/${PROJECT_WINDOWS_SDK_VERSION}/um"
+        "${PROJECT_WINDOWS_SDK_ROOT_DIR}/include/${PROJECT_WINDOWS_SDK_VERSION}/shared"
+        "${PROJECT_WINDOWS_SDK_ROOT_DIR}/include/${PROJECT_WINDOWS_SDK_VERSION}/winrt"
+        "${PROJECT_WINDOWS_SDK_ROOT_DIR}/include/${PROJECT_WINDOWS_SDK_VERSION}/cppwinrt"
+    )
+    target_link_directories(Formula_One_Simulator_2 PRIVATE
+        "${PROJECT_MSVC_ROOT_DIR}/lib/x64"
+        "${PROJECT_WINDOWS_SDK_ROOT_DIR}/lib/${PROJECT_WINDOWS_SDK_VERSION}/ucrt/x64"
+        "${PROJECT_WINDOWS_SDK_ROOT_DIR}/lib/${PROJECT_WINDOWS_SDK_VERSION}/um/x64"
+    )
+endif ()
+
 target_link_libraries(Formula_One_Simulator_2 PRIVATE SFML::Graphics SFML::Window SFML::System)
 target_link_libraries(Formula_One_Simulator_2 PRIVATE nlohmann_json::nlohmann_json)
 
