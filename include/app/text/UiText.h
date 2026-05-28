@@ -63,6 +63,8 @@ inline constexpr const char* kButtonBuyFuel = "REFUEL";
 inline constexpr const char* kButtonBuyAero = "AERO";
 inline constexpr const char* kButtonBuyPower = "POWER";
 inline constexpr const char* kButtonBuyWet = "WET";
+inline constexpr const char* kButtonPrevPage = "PREV";
+inline constexpr const char* kButtonNextPage = "NEXT";
 inline constexpr const char* kButtonSellSelected = "SELL";
 inline constexpr const char* kButtonRepairSelected = "REPAIR";
 inline constexpr const char* kButtonDonateSelected = "DONATE";
@@ -99,6 +101,10 @@ inline std::string load_invalid_message() {
 
 inline std::string load_io_error_message() {
     return "savegame.json could not be opened. Default garage state loaded.";
+}
+
+inline std::string format_page_indicator(const size_t currentPage, const size_t totalPages) {
+    return "PAGE " + std::to_string(currentPage + 1) + "/" + std::to_string(totalPages);
 }
 
 inline std::string format_labeled_value(const char* label, const int value) {

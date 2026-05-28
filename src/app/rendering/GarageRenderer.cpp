@@ -6,18 +6,26 @@
 #include "BitmapText.h"
 #include <algorithm>
 
+namespace {
+size_t page_count(const size_t itemCount, const size_t pageSize) {
+    return std::max<size_t>(1, (itemCount + pageSize - 1) / pageSize);
+}
+}
+
 void Application::drawGarage() {
     using layout = app_layout::GarageLayout;
 
     drawPanel(layout::inventory_panel_rect(), sf::Color(25, 22, 19), sf::Color(178, 98, 58), 3.0f);
 
     const auto& inventory = mGame.player().inventory();
-    const size_t visibleInventoryCount = std::min(inventory.size(), layout::kVisibleInventoryCardCount);
-    for (size_t index = 0; index < visibleInventoryCount; ++index) {
+    const size_t pageStart = mUiState.mGarageInventoryPage * layout::kVisibleInventoryCardCount;
+    const size_t visibleInventoryCount = std::min(layout::kVisibleInventoryCardCount, inventory.size() - std::min(pageStart, inventory.size()));
+    for (size_t displayIndex = 0; displayIndex < visibleInventoryCount; ++displayIndex) {
+        const size_t inventoryIndex = pageStart + displayIndex;
         drawItemCard(
-            inventory[index],
-            layout::inventory_card(index),
-            mUiState.mSelectedInventoryIndex.has_value() && *mUiState.mSelectedInventoryIndex == index,
+            inventory[inventoryIndex],
+            layout::inventory_card(displayIndex),
+            mUiState.mSelectedInventoryIndex.has_value() && *mUiState.mSelectedInventoryIndex == inventoryIndex,
             false);
     }
 

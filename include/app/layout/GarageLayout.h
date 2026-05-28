@@ -22,11 +22,11 @@ struct GarageLayout {
     static constexpr float kInventoryTitleY = 250.0f + kInventoryGroupOffsetY;
 
     static constexpr float kInventoryCardX = 150.0f + kInventoryGroupOffsetX;
-    static constexpr float kInventoryCardStartY = 286.0f + kInventoryGroupOffsetY;
+    static constexpr float kInventoryCardStartY = 280.0f + kInventoryGroupOffsetY;
     static constexpr float kInventoryCardWidth = 176.0f;
-    static constexpr float kInventoryCardHeight = 190.0f;
+    static constexpr float kInventoryCardHeight = 160.0f;
     static constexpr float kInventoryCardStepX = 198.0f;
-    static constexpr float kInventoryCardStepY = 220.0f;
+    static constexpr float kInventoryCardStepY = 172.0f;
 
     static constexpr float kMenuPanelX = 1000.0f + kSideGroupOffsetX;
     static constexpr float kMenuPanelY = 140.0f + kSideGroupOffsetY;
@@ -85,6 +85,16 @@ struct GarageLayout {
     static constexpr float kBackButtonY = 782.0f + kSideGroupOffsetY;
     static constexpr float kBackButtonWidth = 260.0f;
     static constexpr float kBackButtonHeight = 58.0f;
+    static constexpr float kPageIndicatorX = 1030.0f + kSideGroupOffsetX;
+    static constexpr float kPageIndicatorY = 730.0f + kSideGroupOffsetY;
+    static constexpr float kPrevPageButtonX = 1030.0f + kSideGroupOffsetX;
+    static constexpr float kPrevPageButtonY = 740.0f + kSideGroupOffsetY;
+    static constexpr float kPrevPageButtonWidth = 120.0f;
+    static constexpr float kPrevPageButtonHeight = 36.0f;
+    static constexpr float kNextPageButtonX = 1170.0f + kSideGroupOffsetX;
+    static constexpr float kNextPageButtonY = 740.0f + kSideGroupOffsetY;
+    static constexpr float kNextPageButtonWidth = 120.0f;
+    static constexpr float kNextPageButtonHeight = 36.0f;
 
     static sf::FloatRect inventory_panel_rect() {
         return make_rect(kInventoryPanelX, kInventoryPanelY, kInventoryPanelWidth, kInventoryPanelHeight);
@@ -134,6 +144,14 @@ struct GarageLayout {
 
     static sf::FloatRect back_button_rect() {
         return make_rect(kBackButtonX, kBackButtonY, kBackButtonWidth, kBackButtonHeight);
+    }
+
+    static sf::FloatRect prev_page_button_rect() {
+        return make_rect(kPrevPageButtonX, kPrevPageButtonY, kPrevPageButtonWidth, kPrevPageButtonHeight);
+    }
+
+    static sf::FloatRect next_page_button_rect() {
+        return make_rect(kNextPageButtonX, kNextPageButtonY, kNextPageButtonWidth, kNextPageButtonHeight);
     }
 };
 

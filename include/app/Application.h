@@ -24,6 +24,7 @@ private:
     void processEvents();
     void update(float pDeltaTime);
     void render();
+    void syncPagedUiState();
     void refreshScreenInteractions();
     void executeCommand(AppCommand pAction);
     void handleMouseClick(sf::Vector2f pMousePosition);

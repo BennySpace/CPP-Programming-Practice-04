@@ -5,6 +5,10 @@
 #include <algorithm>
 
 namespace {
+size_t page_count(const size_t itemCount, const size_t pageSize) {
+    return std::max<size_t>(1, (itemCount + pageSize - 1) / pageSize);
+}
+
 void append_confirmation_buttons(ScreenInteractions& pInteractions) {
     using layout = app_layout::MainMenuLayout;
 
@@ -63,17 +67,20 @@ void append_garage_interactions(const GameSession& pGame, const ApplicationState
 
     const PlayerProfile& player = pGame.player();
     const auto& inventory = player.inventory();
-    const size_t visibleCount = std::min(inventory.size(), layout::kVisibleInventoryCardCount);
+    const size_t pageCount = page_count(inventory.size(), layout::kVisibleInventoryCardCount);
+    const size_t pageStart = pUiState.mGarageInventoryPage * layout::kVisibleInventoryCardCount;
+    const size_t visibleCount = std::min(layout::kVisibleInventoryCardCount, inventory.size() - std::min(pageStart, inventory.size()));
     bool canSellSelected = false;
     bool canRepairSelected = false;
 
-    for (size_t index = 0; index < visibleCount; ++index) {
+    for (size_t displayIndex = 0; displayIndex < visibleCount; ++displayIndex) {
+        const size_t inventoryIndex = pageStart + displayIndex;
         pInteractions.mHotspots.push_back({
-            layout::inventory_card(index),
+            layout::inventory_card(displayIndex),
             ScreenSelectionKind::inventory,
-            index,
+            inventoryIndex,
             app_text::kBannerItemSelectedTitle,
-            inventory[index].mName,
+            inventory[inventoryIndex].mName,
             true});
     }
 
@@ -89,6 +96,8 @@ void append_garage_interactions(const GameSession& pGame, const ApplicationState
     pInteractions.mButtons.push_back(make_button(AppCommand::buy_wet, app_text::kButtonBuyWet, layout::buy_wet_button_rect(), {78, 112, 172}, {207, 222, 247}, !player.hasMod(ModType::wet_grip)));
     pInteractions.mButtons.push_back(make_button(AppCommand::sell_selected, app_text::kButtonSellSelected, layout::sell_button_rect(), {128, 112, 46}, {239, 226, 162}, canSellSelected));
     pInteractions.mButtons.push_back(make_button(AppCommand::repair_selected, app_text::kButtonRepairSelected, layout::repair_button_rect(), {126, 92, 74}, {230, 202, 188}, canRepairSelected));
+    pInteractions.mButtons.push_back(make_button(AppCommand::garage_prev_page, app_text::kButtonPrevPage, layout::prev_page_button_rect(), {66, 72, 80}, {205, 213, 224}, pUiState.mGarageInventoryPage > 0));
+    pInteractions.mButtons.push_back(make_button(AppCommand::garage_next_page, app_text::kButtonNextPage, layout::next_page_button_rect(), {66, 72, 80}, {205, 213, 224}, pUiState.mGarageInventoryPage + 1 < pageCount));
     pInteractions.mButtons.push_back(make_button(AppCommand::back_main, app_text::kButtonBackMain, layout::back_button_rect(), {88, 78, 70}, {214, 204, 194}, true));
 }
 
@@ -99,10 +108,13 @@ void append_museum_interactions(const GameSession& pGame, const ApplicationState
     const auto& inventory = pGame.player().inventory();
     const auto& museumCollection = pGame.player().museumCollection();
     const auto lootIndices = pGame.player().lootIndices();
-    const size_t visibleCount = std::min(lootIndices.size(), layout::kVisibleDropCardCount);
+    const size_t exhibitPageCount = page_count(museumCollection.size(), layout::kVisibleExhibitCardCount);
+    const size_t dropPageCount = page_count(lootIndices.size(), layout::kVisibleDropCardCount);
+    const size_t dropPageStart = pUiState.mMuseumDropPage * layout::kVisibleDropCardCount;
+    const size_t visibleCount = std::min(layout::kVisibleDropCardCount, lootIndices.size() - std::min(dropPageStart, lootIndices.size()));
 
     for (size_t displayIndex = 0; displayIndex < visibleCount; ++displayIndex) {
-        const size_t inventoryIndex = lootIndices[displayIndex];
+        const size_t inventoryIndex = lootIndices[dropPageStart + displayIndex];
         pInteractions.mHotspots.push_back({
             layout::drop_card(displayIndex),
             ScreenSelectionKind::inventory,
@@ -126,6 +138,10 @@ void append_museum_interactions(const GameSession& pGame, const ApplicationState
         }
     }
 
+    pInteractions.mButtons.push_back(make_button(AppCommand::museum_exhibit_prev_page, app_text::kButtonPrevPage, layout::hall_prev_button_rect(), {82, 72, 58}, {221, 205, 170}, pUiState.mMuseumExhibitPage > 0));
+    pInteractions.mButtons.push_back(make_button(AppCommand::museum_exhibit_next_page, app_text::kButtonNextPage, layout::hall_next_button_rect(), {82, 72, 58}, {221, 205, 170}, pUiState.mMuseumExhibitPage + 1 < exhibitPageCount));
+    pInteractions.mButtons.push_back(make_button(AppCommand::museum_drop_prev_page, app_text::kButtonPrevPage, layout::drop_prev_button_rect(), {78, 64, 60}, {214, 189, 184}, pUiState.mMuseumDropPage > 0));
+    pInteractions.mButtons.push_back(make_button(AppCommand::museum_drop_next_page, app_text::kButtonNextPage, layout::drop_next_button_rect(), {78, 64, 60}, {214, 189, 184}, pUiState.mMuseumDropPage + 1 < dropPageCount));
     pInteractions.mButtons.push_back(make_button(AppCommand::donate_selected, app_text::kButtonDonateSelected, layout::donate_button_rect(), {164, 126, 62}, {241, 220, 162}, canDonateSelected));
     pInteractions.mButtons.push_back(make_button(AppCommand::back_main, app_text::kButtonBackMain, layout::back_button_rect(), {84, 72, 62}, {218, 206, 190}, true));
 }

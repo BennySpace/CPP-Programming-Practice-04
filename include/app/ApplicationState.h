@@ -40,6 +40,9 @@ struct ApplicationState {
     ApplicationScreen mScreen = ApplicationScreen::main_menu;
     size_t mSelectedRace = 0;
     std::optional<size_t> mSelectedInventoryIndex;
+    size_t mGarageInventoryPage = 0;
+    size_t mMuseumExhibitPage = 0;
+    size_t mMuseumDropPage = 0;
     bool mConfirmingNewGame = false;
     AppBannerState mBanner;
     AppRaceFeedbackState mRaceFeedback;

@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "layout/Layouts.h"
 #include "platform/WindowIcon.h"
 #include "sfml/SfmlUtils.h"
 #include "text/UiText.h"
@@ -86,7 +87,32 @@ void Application::render() {
     mWindow.display();
 }
 
+void Application::syncPagedUiState() {
+    const auto& inventory = mGame.player().inventory();
+    const auto& museumCollection = mGame.player().museumCollection();
+    const std::vector<size_t> lootIndices = mGame.player().lootIndices();
+
+    const size_t garagePageCount = std::max<size_t>(
+        1,
+        (inventory.size() + app_layout::GarageLayout::kVisibleInventoryCardCount - 1) / app_layout::GarageLayout::kVisibleInventoryCardCount);
+    const size_t museumExhibitPageCount = std::max<size_t>(
+        1,
+        (museumCollection.size() + app_layout::MuseumLayout::kVisibleExhibitCardCount - 1) / app_layout::MuseumLayout::kVisibleExhibitCardCount);
+    const size_t museumDropPageCount = std::max<size_t>(
+        1,
+        (lootIndices.size() + app_layout::MuseumLayout::kVisibleDropCardCount - 1) / app_layout::MuseumLayout::kVisibleDropCardCount);
+
+    mUiState.mGarageInventoryPage = std::min(mUiState.mGarageInventoryPage, garagePageCount - 1);
+    mUiState.mMuseumExhibitPage = std::min(mUiState.mMuseumExhibitPage, museumExhibitPageCount - 1);
+    mUiState.mMuseumDropPage = std::min(mUiState.mMuseumDropPage, museumDropPageCount - 1);
+
+    if (mUiState.mSelectedInventoryIndex.has_value() && *mUiState.mSelectedInventoryIndex >= inventory.size()) {
+        mUiState.mSelectedInventoryIndex.reset();
+    }
+}
+
 void Application::refreshScreenInteractions() {
+    syncPagedUiState();
     mScreenInteractions = build_screen_interactions(mGame, mUiState);
 }
 

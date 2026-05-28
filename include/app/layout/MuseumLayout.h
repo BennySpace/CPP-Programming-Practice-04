@@ -66,6 +66,26 @@ struct MuseumLayout {
     static constexpr float kBackButtonY = 785.0f + kButtonGroupOffsetY;
     static constexpr float kBackButtonWidth = 250.0f;
     static constexpr float kBackButtonHeight = 55.0f;
+    static constexpr float kHallPageIndicatorX = 590.0f + kHallGroupOffsetX;
+    static constexpr float kHallPageIndicatorY = 176.0f + kHallGroupOffsetY;
+    static constexpr float kHallPrevButtonX = 650.0f + kHallGroupOffsetX;
+    static constexpr float kHallPrevButtonY = 166.0f + kHallGroupOffsetY;
+    static constexpr float kHallPrevButtonWidth = 88.0f;
+    static constexpr float kHallPrevButtonHeight = 34.0f;
+    static constexpr float kHallNextButtonX = 748.0f + kHallGroupOffsetX;
+    static constexpr float kHallNextButtonY = 166.0f + kHallGroupOffsetY;
+    static constexpr float kHallNextButtonWidth = 88.0f;
+    static constexpr float kHallNextButtonHeight = 34.0f;
+    static constexpr float kDropPageIndicatorX = 1090.0f + kSideGroupOffsetX;
+    static constexpr float kDropPageIndicatorY = 176.0f + kSideGroupOffsetY;
+    static constexpr float kDropPrevButtonX = 1166.0f + kSideGroupOffsetX;
+    static constexpr float kDropPrevButtonY = 166.0f + kSideGroupOffsetY;
+    static constexpr float kDropPrevButtonWidth = 72.0f;
+    static constexpr float kDropPrevButtonHeight = 34.0f;
+    static constexpr float kDropNextButtonX = 1244.0f + kSideGroupOffsetX;
+    static constexpr float kDropNextButtonY = 166.0f + kSideGroupOffsetY;
+    static constexpr float kDropNextButtonWidth = 72.0f;
+    static constexpr float kDropNextButtonHeight = 34.0f;
 
     static sf::FloatRect hall_panel_rect() {
         return make_rect(kHallPanelX, kHallPanelY, kHallPanelWidth, kHallPanelHeight);
@@ -97,6 +117,22 @@ struct MuseumLayout {
 
     static sf::FloatRect back_button_rect() {
         return make_rect(kBackButtonX, kBackButtonY, kBackButtonWidth, kBackButtonHeight);
+    }
+
+    static sf::FloatRect hall_prev_button_rect() {
+        return make_rect(kHallPrevButtonX, kHallPrevButtonY, kHallPrevButtonWidth, kHallPrevButtonHeight);
+    }
+
+    static sf::FloatRect hall_next_button_rect() {
+        return make_rect(kHallNextButtonX, kHallNextButtonY, kHallNextButtonWidth, kHallNextButtonHeight);
+    }
+
+    static sf::FloatRect drop_prev_button_rect() {
+        return make_rect(kDropPrevButtonX, kDropPrevButtonY, kDropPrevButtonWidth, kDropPrevButtonHeight);
+    }
+
+    static sf::FloatRect drop_next_button_rect() {
+        return make_rect(kDropNextButtonX, kDropNextButtonY, kDropNextButtonWidth, kDropNextButtonHeight);
     }
 };
 }

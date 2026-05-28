@@ -101,6 +101,18 @@ void Application::executeCommand(const AppCommand action) {
             return;
         }
 
+        case AppCommand::garage_prev_page:
+            if (mUiState.mGarageInventoryPage > 0) {
+                --mUiState.mGarageInventoryPage;
+                mUiState.mSelectedInventoryIndex.reset();
+            }
+            return;
+
+        case AppCommand::garage_next_page:
+            ++mUiState.mGarageInventoryPage;
+            mUiState.mSelectedInventoryIndex.reset();
+            return;
+
         case AppCommand::sell_selected:
             if (mUiState.mSelectedInventoryIndex.has_value()) {
                 const PlayerCommandResult result = mGame.sellLoot(*mUiState.mSelectedInventoryIndex);
@@ -121,6 +133,28 @@ void Application::executeCommand(const AppCommand action) {
                     mUiState.mSelectedInventoryIndex.reset();
                 }
             }
+            return;
+
+        case AppCommand::museum_exhibit_prev_page:
+            if (mUiState.mMuseumExhibitPage > 0) {
+                --mUiState.mMuseumExhibitPage;
+            }
+            return;
+
+        case AppCommand::museum_exhibit_next_page:
+            ++mUiState.mMuseumExhibitPage;
+            return;
+
+        case AppCommand::museum_drop_prev_page:
+            if (mUiState.mMuseumDropPage > 0) {
+                --mUiState.mMuseumDropPage;
+                mUiState.mSelectedInventoryIndex.reset();
+            }
+            return;
+
+        case AppCommand::museum_drop_next_page:
+            ++mUiState.mMuseumDropPage;
+            mUiState.mSelectedInventoryIndex.reset();
             return;
 
         case AppCommand::donate_selected:
