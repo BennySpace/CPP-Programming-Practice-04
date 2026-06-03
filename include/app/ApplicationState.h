@@ -3,6 +3,7 @@
 
 #include "commands/Command.h"
 #include <SFML/Graphics.hpp>
+#include <algorithm>
 #include <cstddef>
 #include <optional>
 #include <string>
@@ -47,5 +48,31 @@ struct ApplicationState {
     AppBannerState mBanner;
     AppRaceFeedbackState mRaceFeedback;
 };
+
+namespace app_state {
+[[nodiscard]] inline size_t page_count(const size_t pItemCount, const size_t pPageSize) {
+    return std::max<size_t>(1, (pItemCount + pPageSize - 1) / pPageSize);
+}
+
+[[nodiscard]] inline size_t page_start(const size_t pPage, const size_t pPageSize) {
+    return pPage * pPageSize;
+}
+
+[[nodiscard]] inline size_t visible_item_count(const size_t pItemCount, const size_t pPageStart, const size_t pPageSize) {
+    return std::min(pPageSize, pItemCount - std::min(pPageStart, pItemCount));
+}
+
+inline void clamp_page(size_t& pPage, const size_t pItemCount, const size_t pPageSize) {
+    pPage = std::min(pPage, page_count(pItemCount, pPageSize) - 1);
+}
+
+[[nodiscard]] inline bool has_selected_inventory(const ApplicationState& pUiState, const size_t pInventorySize) {
+    return pUiState.mSelectedInventoryIndex.has_value() && *pUiState.mSelectedInventoryIndex < pInventorySize;
+}
+
+inline void clear_selected_inventory(ApplicationState& pUiState) {
+    pUiState.mSelectedInventoryIndex.reset();
+}
+}
 
 #endif // APPLICATION_STATE_H

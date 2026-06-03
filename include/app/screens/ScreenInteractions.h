@@ -3,6 +3,7 @@
 
 #include "ApplicationState.h"
 #include "GameSession.h"
+#include <functional>
 #include <vector>
 
 enum class ScreenSelectionKind {
@@ -25,5 +26,7 @@ struct ScreenInteractions {
 };
 
 [[nodiscard]] ScreenInteractions build_screen_interactions(const GameSession& pGame, const ApplicationState& pUiState);
+using ScreenRectResolver = std::function<sf::FloatRect(const std::string&, const sf::FloatRect&)>;
+[[nodiscard]] ScreenInteractions build_screen_interactions(const GameSession& pGame, const ApplicationState& pUiState, const ScreenRectResolver& pResolveRect);
 
 #endif // SCREEN_INTERACTIONS_H
