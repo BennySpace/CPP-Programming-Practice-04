@@ -30,7 +30,9 @@ file(GLOB PROJECT_VCPKG_RUNTIME_DLLS
 set(APP_SOURCES
     ${CMAKE_SOURCE_DIR}/src/app/Application.cpp
     ${CMAKE_SOURCE_DIR}/src/app/AssetManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/app/CommandCoordinator.cpp
     ${CMAKE_SOURCE_DIR}/src/app/CommandExecutor.cpp
+    ${CMAKE_SOURCE_DIR}/src/app/EventProcessing.cpp
     ${CMAKE_SOURCE_DIR}/src/app/InputHandling.cpp
     ${CMAKE_SOURCE_DIR}/src/app/screens/ScreenInteractions.cpp
     ${CMAKE_SOURCE_DIR}/src/app/screens/ScreenNavigation.cpp
@@ -43,6 +45,13 @@ set(APP_SOURCES
     ${CMAKE_SOURCE_DIR}/src/app/rendering/TrackRenderHelpers.cpp
     ${CMAKE_SOURCE_DIR}/src/app/rendering/WidgetRenderer.cpp
 )
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    list(APPEND APP_SOURCES
+        ${CMAKE_SOURCE_DIR}/src/app/DebugLayoutRegistry.cpp
+        ${CMAKE_SOURCE_DIR}/src/app/DebugLayoutEditor.cpp
+    )
+endif ()
 
 set(DOMAIN_SOURCES
     ${CMAKE_SOURCE_DIR}/src/domain/GameSession.cpp

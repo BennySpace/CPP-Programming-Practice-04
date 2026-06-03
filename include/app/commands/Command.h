@@ -25,7 +25,6 @@ enum class AppCommand {
     garage_prev_page,
     garage_next_page,
     sell_selected,
-    repair_selected,
     museum_exhibit_prev_page,
     museum_exhibit_next_page,
     museum_drop_prev_page,

@@ -6,8 +6,13 @@
 #include "GameSession.h"
 #include "screens/ScreenInteractions.h"
 #include "screens/ScreenNavigation.h"
+#ifndef NDEBUG
+#include "debug/DebugLayoutEditor.h"
+#endif
 #include <SFML/Graphics.hpp>
 #include <string>
+
+struct CommandExecutionResult;
 
 class Application {
 public:
@@ -20,12 +25,21 @@ private:
     ApplicationState mUiState;
     ScreenInteractions mScreenInteractions;
     AssetManager mAssets;
+#ifndef NDEBUG
+    DebugLayoutEditor mDebugLayoutEditor;
+#endif
 
     void processEvents();
     void update(float pDeltaTime);
     void render();
     void syncPagedUiState();
     void refreshScreenInteractions();
+    void handleWindowClosed();
+    void handleMouseButtonPressed(const sf::Event::MouseButtonPressed& pEvent);
+    void handleMouseButtonReleased(const sf::Event::MouseButtonReleased& pEvent);
+    void handleMouseMoved(const sf::Event::MouseMoved& pEvent);
+    void handleKeyPressed(const sf::Event::KeyPressed& pEvent);
+    void applyCommandExecutionResult(const CommandExecutionResult& pResult);
     void executeCommand(AppCommand pAction);
     void handleMouseClick(sf::Vector2f pMousePosition);
     void applyNavigation(const NavigationCommandResult& pResult);
@@ -34,6 +48,14 @@ private:
     void showBanner(const std::string& pTitle, const std::string& pMessage, bool pSuccess);
     void showBanner(const std::string& pTitle, bool pSuccess);
     void showRaceFeedback(const std::string& pLabel, bool pSuccess);
+#ifndef NDEBUG
+    void rebuildDebugLayoutEditor();
+    void handleDebugKeyPressed(const sf::Event::KeyPressed& pEvent);
+    [[nodiscard]] bool handleDebugMousePressed(const sf::Event::MouseButtonPressed& pEvent);
+    void handleDebugMouseReleased(const sf::Event::MouseButtonReleased& pEvent);
+    void handleDebugMouseMoved(const sf::Event::MouseMoved& pEvent);
+#endif
+    [[nodiscard]] sf::FloatRect debugRectOverride(const std::string& pName, const sf::FloatRect& pFallbackRect) const;
 
     void drawBackground();
     void drawStatusBar();

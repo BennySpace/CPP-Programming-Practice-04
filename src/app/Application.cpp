@@ -4,7 +4,21 @@
 #include "sfml/SfmlUtils.h"
 #include "text/UiText.h"
 #include <algorithm>
-#include <optional>
+
+namespace {
+void tick_timer(float& pTimer, const float pDeltaTime) {
+    pTimer = std::max(0.0f, pTimer - pDeltaTime);
+}
+}
+
+#ifndef NDEBUG
+#include "debug/DebugLayoutRegistry.h"
+
+namespace {
+constexpr float kDebugNudgeStep = 10.0f;
+constexpr float kDebugFineNudgeStep = 1.0f;
+}
+#endif
 
 Application::Application()
     : mWindow(
@@ -27,39 +41,21 @@ void Application::run() {
     }
 }
 
-void Application::processEvents() {
-    while (const std::optional event = mWindow.pollEvent()) {
-        if (event->is<sf::Event::Closed>()) {
-            applyNavigation(app_navigation::exit_application());
-            continue;
-        }
-
-        if (const auto* mousePressed = event->getIf<sf::Event::MouseButtonPressed>()) {
-            if (mousePressed->button == sf::Mouse::Button::Left) {
-                handleMouseClick(mWindow.mapPixelToCoords(mousePressed->position));
-            }
-        }
-
-        if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
-            if (keyPressed->code == sf::Keyboard::Key::Escape) {
-                applyNavigation(app_navigation::handle_escape(mUiState));
-            }
-        }
-    }
-}
-
 void Application::update(const float deltaTime) {
     if (mUiState.mBanner.mTimer > 0.0f) {
-        mUiState.mBanner.mTimer = std::max(0.0f, mUiState.mBanner.mTimer - deltaTime);
+        tick_timer(mUiState.mBanner.mTimer, deltaTime);
     }
 
     if (mUiState.mRaceFeedback.mTimer > 0.0f) {
-        mUiState.mRaceFeedback.mTimer = std::max(0.0f, mUiState.mRaceFeedback.mTimer - deltaTime);
+        tick_timer(mUiState.mRaceFeedback.mTimer, deltaTime);
     }
 }
 
 void Application::render() {
     refreshScreenInteractions();
+#ifndef NDEBUG
+    rebuildDebugLayoutEditor();
+#endif
     mWindow.clear();
     drawBackground();
     drawStatusBar();
@@ -84,36 +80,39 @@ void Application::render() {
     }
 
     drawButtons();
+#ifndef NDEBUG
+    mDebugLayoutEditor.draw(mWindow);
+#endif
     mWindow.display();
 }
 
 void Application::syncPagedUiState() {
     const auto& inventory = mGame.player().inventory();
     const auto& museumCollection = mGame.player().museumCollection();
+    const std::vector<size_t> garageLootIndices = mGame.player().lootIndices();
     const std::vector<size_t> lootIndices = mGame.player().lootIndices();
 
-    const size_t garagePageCount = std::max<size_t>(
-        1,
-        (inventory.size() + app_layout::GarageLayout::kVisibleInventoryCardCount - 1) / app_layout::GarageLayout::kVisibleInventoryCardCount);
-    const size_t museumExhibitPageCount = std::max<size_t>(
-        1,
-        (museumCollection.size() + app_layout::MuseumLayout::kVisibleExhibitCardCount - 1) / app_layout::MuseumLayout::kVisibleExhibitCardCount);
-    const size_t museumDropPageCount = std::max<size_t>(
-        1,
-        (lootIndices.size() + app_layout::MuseumLayout::kVisibleDropCardCount - 1) / app_layout::MuseumLayout::kVisibleDropCardCount);
+    app_state::clamp_page(mUiState.mGarageInventoryPage, garageLootIndices.size(), app_layout::GarageLayout::kVisibleInventoryCardCount);
+    app_state::clamp_page(mUiState.mMuseumExhibitPage, museumCollection.size(), app_layout::MuseumLayout::kVisibleExhibitCardCount);
+    app_state::clamp_page(mUiState.mMuseumDropPage, lootIndices.size(), app_layout::MuseumLayout::kVisibleDropCardCount);
 
-    mUiState.mGarageInventoryPage = std::min(mUiState.mGarageInventoryPage, garagePageCount - 1);
-    mUiState.mMuseumExhibitPage = std::min(mUiState.mMuseumExhibitPage, museumExhibitPageCount - 1);
-    mUiState.mMuseumDropPage = std::min(mUiState.mMuseumDropPage, museumDropPageCount - 1);
-
-    if (mUiState.mSelectedInventoryIndex.has_value() && *mUiState.mSelectedInventoryIndex >= inventory.size()) {
-        mUiState.mSelectedInventoryIndex.reset();
+    if (!app_state::has_selected_inventory(mUiState, inventory.size())) {
+        app_state::clear_selected_inventory(mUiState);
     }
 }
 
 void Application::refreshScreenInteractions() {
     syncPagedUiState();
-    mScreenInteractions = build_screen_interactions(mGame, mUiState);
+    mScreenInteractions = build_screen_interactions(
+        mGame,
+        mUiState,
+        [&](const std::string& pName, const sf::FloatRect& pFallbackRect) {
+#ifndef NDEBUG
+            return mDebugLayoutEditor.rectOverride(pName).value_or(pFallbackRect);
+#else
+            return pFallbackRect;
+#endif
+        });
 }
 
 void Application::applyNavigation(const NavigationCommandResult& result) {
@@ -170,6 +169,90 @@ void Application::showRaceFeedback(const std::string& label, const bool success)
     mUiState.mRaceFeedback.mTimer = 1.35f;
 }
 
+#ifndef NDEBUG
+void Application::rebuildDebugLayoutEditor() {
+    mDebugLayoutEditor.rebuild(mUiState.mScreen, build_debug_layout_rects(mGame, mUiState, mDebugLayoutEditor));
+}
+
+void Application::handleDebugKeyPressed(const sf::Event::KeyPressed& pEvent) {
+    if (!mDebugLayoutEditor.enabled()) {
+        return;
+    }
+
+    const float step = pEvent.shift ? kDebugFineNudgeStep : kDebugNudgeStep;
+
+    switch (pEvent.code) {
+        case sf::Keyboard::Key::W:
+            mDebugLayoutEditor.nudgePosition(0.0f, -step);
+            break;
+        case sf::Keyboard::Key::S:
+            mDebugLayoutEditor.nudgePosition(0.0f, step);
+            break;
+        case sf::Keyboard::Key::A:
+            mDebugLayoutEditor.nudgePosition(-step, 0.0f);
+            break;
+        case sf::Keyboard::Key::D:
+            mDebugLayoutEditor.nudgePosition(step, 0.0f);
+            break;
+        case sf::Keyboard::Key::Left:
+            mDebugLayoutEditor.resizeSelected(-step, 0.0f);
+            break;
+        case sf::Keyboard::Key::Right:
+            mDebugLayoutEditor.resizeSelected(step, 0.0f);
+            break;
+        case sf::Keyboard::Key::Up:
+            mDebugLayoutEditor.resizeSelected(0.0f, -step);
+            break;
+        case sf::Keyboard::Key::Down:
+            mDebugLayoutEditor.resizeSelected(0.0f, step);
+            break;
+        default:
+            break;
+    }
+}
+
+bool Application::handleDebugMousePressed(const sf::Event::MouseButtonPressed& pEvent) {
+    if (!mDebugLayoutEditor.enabled() || pEvent.button != sf::Mouse::Button::Left) {
+        return false;
+    }
+
+    const sf::Vector2f mousePosition = mWindow.mapPixelToCoords(pEvent.position);
+    const std::optional<size_t> hitIndex = mDebugLayoutEditor.hitTest(mousePosition);
+    if (!hitIndex.has_value()) {
+        mDebugLayoutEditor.select(std::nullopt);
+        return true;
+    }
+
+    mDebugLayoutEditor.select(hitIndex);
+    mDebugLayoutEditor.beginDrag(mousePosition);
+    return true;
+}
+
+void Application::handleDebugMouseReleased(const sf::Event::MouseButtonReleased& pEvent) {
+    if (!mDebugLayoutEditor.enabled() || pEvent.button != sf::Mouse::Button::Left) {
+        return;
+    }
+
+    mDebugLayoutEditor.endDrag();
+}
+
+void Application::handleDebugMouseMoved(const sf::Event::MouseMoved& pEvent) {
+    if (!mDebugLayoutEditor.enabled()) {
+        return;
+    }
+
+    mDebugLayoutEditor.dragTo(mWindow.mapPixelToCoords(pEvent.position));
+}
+
+sf::FloatRect Application::debugRectOverride(const std::string& pName, const sf::FloatRect& pFallbackRect) const {
+    return mDebugLayoutEditor.rectOverride(pName).value_or(pFallbackRect);
+}
+#else
+sf::FloatRect Application::debugRectOverride(const std::string&, const sf::FloatRect& pFallbackRect) const {
+    return pFallbackRect;
+}
+#endif
+
 const sf::Texture* Application::trackPreviewTexture(const size_t pIndex) const {
     return mAssets.trackPreviewTexture(pIndex);
 }
@@ -183,31 +266,14 @@ const sf::Texture* Application::itemTexture(const Item& currentItem) const {
 }
 
 std::string Application::modStatusText(const ModType currentMod) const {
-    for (const auto& inventoryItem : mGame.player().inventory()) {
-        const auto inventoryModType = PlayerProfile::normalizeModName(inventoryItem.mName);
-        if (inventoryItem.mType == ItemType::equipment
-            && inventoryModType.has_value()
-            && *inventoryModType == currentMod) {
-            if (inventoryItem.mIsBroken) {
-                return app_text::format_mod_broken(to_code(currentMod));
-            }
-
-            return app_text::format_mod_durability(to_code(currentMod), inventoryItem.mDurability);
-        }
+    const Item& mod = mGame.player().garageMod(currentMod);
+    if (mod.mIsBroken) {
+        return app_text::format_mod_broken(to_code(currentMod));
     }
 
-    return app_text::kNotFittedLabel;
+    return app_text::format_mod_durability(to_code(currentMod), mod.mDurability);
 }
 
 sf::Color Application::modStatusColor(const ModType currentMod) const {
-    for (const auto& inventoryItem : mGame.player().inventory()) {
-        const auto inventoryModType = PlayerProfile::normalizeModName(inventoryItem.mName);
-        if (inventoryItem.mType == ItemType::equipment
-            && inventoryModType.has_value()
-            && *inventoryModType == currentMod) {
-            return inventoryItem.mIsBroken ? sf::Color(255, 156, 156) : sf::Color(181, 243, 190);
-        }
-    }
-
-    return sf::Color(199, 205, 219);
+    return mGame.player().garageMod(currentMod).mIsBroken ? sf::Color(255, 156, 156) : sf::Color(181, 243, 190);
 }
