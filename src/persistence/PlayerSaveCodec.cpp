@@ -3,6 +3,7 @@
 #include "ItemType.h"
 #include "ModType.h"
 #include "PlayerProfile.h"
+#include <algorithm>
 #include <optional>
 #include <string>
 #include <vector>
@@ -10,6 +11,14 @@
 using json = nlohmann::json;
 
 namespace {
+int clamp_to_non_negative(const int pValue) {
+    return std::max(0, pValue);
+}
+
+int clamp_mod_durability(const int pValue) {
+    return std::clamp(pValue, 0, 100);
+}
+
 std::optional<ItemType> parse_item_type(const std::string& pValue) {
     if (pValue == "loot") {
         return ItemType::loot;
@@ -43,6 +52,7 @@ bool encode_item(const Item& pItem, json& pOutput) {
     if (pItem.mType == ItemType::equipment) {
         pOutput["durability"] = pItem.mDurability;
         pOutput["isBroken"] = pItem.mIsBroken;
+        pOutput["isEquipped"] = pItem.mIsEquipped;
     }
 
     return true;
@@ -67,12 +77,13 @@ bool decode_item(const json& pInput, Item& pOutput) {
     pOutput = Item(
         loadedName,
         *type,
-        pInput.value("value", 0),
+        clamp_to_non_negative(pInput.value("value", 0)),
         pInput.value("description", ""));
 
     if (*type == ItemType::equipment) {
-        pOutput.mDurability = pInput.value("durability", 100);
-        pOutput.mIsBroken = pInput.value("isBroken", false);
+        pOutput.mDurability = clamp_mod_durability(pInput.value("durability", 100));
+        pOutput.mIsBroken = pOutput.mDurability <= 0 || pInput.value("isBroken", false);
+        pOutput.mIsEquipped = pInput.value("isEquipped", false);
     }
 
     return true;
@@ -94,6 +105,16 @@ bool PlayerSaveCodec::encode(const PlayerSaveData& pSaveData, json& pOutput) {
         pOutput["inventory"].push_back(itemJson);
     }
 
+    pOutput["mods"] = json::array();
+    for (const auto& mod : pSaveData.mGarageMods) {
+        json itemJson;
+        if (!encode_item(mod, itemJson)) {
+            return false;
+        }
+
+        pOutput["mods"].push_back(itemJson);
+    }
+
     pOutput["museum"] = json::array();
     for (const auto& exhibit : pSaveData.mMuseumCollection) {
         pOutput["museum"].push_back({
@@ -110,8 +131,8 @@ bool PlayerSaveCodec::encode(const PlayerSaveData& pSaveData, json& pOutput) {
 
 bool PlayerSaveCodec::decode(const json& pInput, PlayerSaveData& pOutput) {
     PlayerSaveData loadedData;
-    loadedData.mMoney = pInput.value("money", game_balance::kStartingMoney);
-    loadedData.mFuel = pInput.value("fuel", game_balance::kStartingFuel);
+    loadedData.mMoney = clamp_to_non_negative(pInput.value("money", game_balance::kStartingMoney));
+    loadedData.mFuel = clamp_to_non_negative(pInput.value("fuel", game_balance::kStartingFuel));
 
     for (const auto& itemJson : pInput.value("inventory", json::array())) {
         Item loadedItem("", ItemType::loot, 0);
@@ -120,6 +141,15 @@ bool PlayerSaveCodec::decode(const json& pInput, PlayerSaveData& pOutput) {
         }
 
         loadedData.mInventory.push_back(loadedItem);
+    }
+
+    for (const auto& itemJson : pInput.value("mods", json::array())) {
+        Item loadedMod("", ItemType::loot, 0);
+        if (!decode_item(itemJson, loadedMod)) {
+            return false;
+        }
+
+        loadedData.mGarageMods.push_back(loadedMod);
     }
 
     for (const auto& exhibitJson : pInput.value("museum", json::array())) {
@@ -131,7 +161,7 @@ bool PlayerSaveCodec::decode(const json& pInput, PlayerSaveData& pOutput) {
         loadedData.mMuseumCollection.push_back(Item(
             exhibitJson.value("name", ""),
             *type,
-            exhibitJson.value("value", 0),
+            clamp_to_non_negative(exhibitJson.value("value", 0)),
             exhibitJson.value("description", PlayerProfile::lootDescription(exhibitJson.value("name", "")))));
     }
 

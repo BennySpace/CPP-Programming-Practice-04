@@ -8,6 +8,7 @@ struct PlayerSaveData {
     int mMoney = 0;
     int mFuel = 0;
     std::vector<Item> mInventory;
+    std::vector<Item> mGarageMods;
     std::vector<Item> mMuseumCollection;
     std::vector<int> mMuseumRewards;
 };

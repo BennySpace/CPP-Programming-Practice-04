@@ -28,14 +28,12 @@ inline constexpr const char* kRaceHubWetGrip = "WET GRIP";
 inline constexpr const char* kRaceHubRadioFallback = "SELECT A TRACK.";
 
 inline constexpr const char* kGarageMenuFuel = "FUEL PLUS 6 FOR 40";
-inline constexpr const char* kGarageMenuAero = "AERO WING 15";
-inline constexpr const char* kGarageMenuPower = "HIGH POWER 30";
-inline constexpr const char* kGarageMenuWet = "WET GRIP 45";
+inline constexpr const char* kGarageMenuAero = "AERO REPAIR 15";
+inline constexpr const char* kGarageMenuPower = "POWER REPAIR 30";
+inline constexpr const char* kGarageMenuWet = "WET REPAIR 45";
 inline constexpr const char* kGarageSelectedPart = "PIT BENCH";
-inline constexpr const char* kGarageSelectedHint = "SELECT A CARD TO CHECK ITS STATUS.";
+inline constexpr const char* kGarageSelectedHint = "SELECT LOOT TO SELL IT OR SEND IT TO THE MUSEUM.";
 inline constexpr const char* kGarageSelectedLootHint = "LOOT CAN BE SOLD OR SAVED FOR THE MUSEUM.";
-inline constexpr const char* kGarageSelectedBrokenHint = "BROKEN PARTS CAN BE REPAIRED HERE.";
-inline constexpr const char* kGarageSelectedWorkingHint = "THIS PART IS READY TO RACE.";
 
 inline constexpr const char* kMuseumTitle = "PODIUM TROPHY HALL";
 inline constexpr const char* kMuseumEmptyHint =
@@ -44,7 +42,7 @@ inline constexpr const char* kMuseumDropOffTitle = "DONATION BAY";
 inline constexpr const char* kMuseumDropOffEmpty =
     "WIN LOOT TO DONATE.";
 inline constexpr const char* kMuseumMilestones = "REWARD TIERS";
-inline constexpr const char* kMuseumRewards = "180 / 320 / 520 CREDITS";
+inline constexpr const char* kMuseumRewards = "220 / 360 / 620 CREDITS";
 
 inline constexpr const char* kButtonConfirmReset = "RESET";
 inline constexpr const char* kButtonCancel = "CANCEL";
@@ -66,7 +64,6 @@ inline constexpr const char* kButtonBuyWet = "WET";
 inline constexpr const char* kButtonPrevPage = "PREV";
 inline constexpr const char* kButtonNextPage = "NEXT";
 inline constexpr const char* kButtonSellSelected = "SELL";
-inline constexpr const char* kButtonRepairSelected = "REPAIR";
 inline constexpr const char* kButtonDonateSelected = "DONATE";
 
 inline constexpr const char* kBannerGarageOnlineTitle = "GARAGE ONLINE";

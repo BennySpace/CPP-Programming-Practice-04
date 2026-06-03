@@ -9,9 +9,7 @@ inline constexpr const char* kLootSoldTitle = "LOOT SOLD";
 inline constexpr const char* kDonationFailedTitle = "DONATION FAILED";
 inline constexpr const char* kAlreadyDisplayedTitle = "ALREADY DISPLAYED";
 inline constexpr const char* kNewExhibitTitle = "NEW EXHIBIT";
-inline constexpr const char* kPurchaseBlockedTitle = "PURCHASE BLOCKED";
 inline constexpr const char* kNotEnoughMoneyTitle = "NOT ENOUGH MONEY";
-inline constexpr const char* kModPurchasedTitle = "MOD PURCHASED";
 inline constexpr const char* kRepairFailedTitle = "REPAIR FAILED";
 inline constexpr const char* kRepairCompleteTitle = "REPAIR COMPLETE";
 inline constexpr const char* kFuelRestockedTitle = "FUEL RESTOCKED";
@@ -56,26 +54,6 @@ inline std::string museum_milestone_reward(const int pCredits) {
     return std::string(kMuseumMilestonePrefix) + std::to_string(pCredits) + kCreditsSuffix;
 }
 
-inline std::string mod_already_installed(const std::string& pLabel) {
-    return pLabel + " is already installed and working.";
-}
-
-inline std::string earn_more_credits_for_mod(const std::string& pLabel) {
-    return "Earn more credits before buying " + pLabel + ".";
-}
-
-inline std::string mod_race_ready_again(const std::string& pLabel) {
-    return pLabel + " is race-ready again.";
-}
-
-inline std::string mod_added_to_garage(const std::string& pLabel) {
-    return pLabel + " added to the garage.";
-}
-
-inline std::string repair_choose_damaged() {
-    return "Choose a damaged mod before repairing.";
-}
-
 inline std::string repair_already_working() {
     return "This mod is already in working condition.";
 }
@@ -102,6 +80,10 @@ inline std::string new_game_reset() {
 
 inline std::string selected_race_unavailable() {
     return "Selected race is unavailable.";
+}
+
+inline std::string finish_active_race_first() {
+    return "Finish or leave the active race before starting another one.";
 }
 
 inline std::string not_enough_credits_for_entry() {

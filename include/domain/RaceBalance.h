@@ -14,29 +14,29 @@ struct DriveBalance {
 };
 
 struct MonacoBalance {
-    static constexpr int kCrashChance = 12;
+    static constexpr int kCrashChance = 18;
     static constexpr DriveBalance kDrive = {
-        12,
-        8,
-        {38, 18, 8}
+        16,
+        10,
+        {44, 10, 18}
     };
 };
 
 struct SpaBalance {
-    static constexpr int kRainFuelChance = 20;
+    static constexpr int kRainFuelChance = 32;
     static constexpr DriveBalance kDrive = {
-        18,
-        12,
-        {16, 22, 28}
+        22,
+        14,
+        {18, 18, 24}
     };
 };
 
 struct MonzaBalance {
-    static constexpr int kItemLossChance = 18;
+    static constexpr int kItemLossChance = 20;
     static constexpr DriveBalance kDrive = {
-        28,
-        18,
-        {12, 26, 10}
+        24,
+        16,
+        {16, 22, 8}
     };
 };
 

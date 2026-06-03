@@ -6,6 +6,13 @@
 #include "RaceFactory.h"
 #include <algorithm>
 
+namespace {
+int repair_cost_for_mod(const ModType pModType) {
+    const int modValue = game_balance::mod_cost(pModType);
+    return std::max(1, modValue * game_balance::kRepairCostNumerator / game_balance::kRepairCostDenominator);
+}
+}
+
 GameSession::GameSession() {
     const PlayerSaveLoadStatus loadStatus = PlayerSaveRepository::load(mPlayer, mSaveFile);
     mRaces = race_factory::create_default_races();
@@ -37,9 +44,21 @@ const Race* GameSession::activeRace() const {
     return mRaces[static_cast<size_t>(mActiveRaceIndex)].get();
 }
 
+std::optional<size_t> GameSession::activeRaceIndex() const {
+    if (mActiveRaceIndex < 0 || mActiveRaceIndex >= static_cast<int>(mRaces.size())) {
+        return std::nullopt;
+    }
+
+    return static_cast<size_t>(mActiveRaceIndex);
+}
+
 GameCommandResult GameSession::startRace(size_t pRaceIndex) {
     if (pRaceIndex >= mRaces.size()) {
         return {false, false, domain_text::kRaceErrorTitle, domain_text::selected_race_unavailable()};
+    }
+
+    if (activeRace() != nullptr) {
+        return {false, false, domain_text::kEntryDeniedTitle, domain_text::finish_active_race_first()};
     }
 
     Race* selectedRace = mRaces[pRaceIndex].get();
@@ -96,8 +115,8 @@ PlayerCommandResult GameSession::buyFuel() {
     return {true, domain_text::kFuelRestockedTitle, domain_text::garage_reserves_increased(game_balance::kFuelPackageUnits)};
 }
 
-PlayerCommandResult GameSession::buyMod(const ModType pModType, const int pCost) {
-    PlayerCommandResult result = mPlayer.buyMod(pModType, pCost);
+PlayerCommandResult GameSession::repairMod(const ModType pModType) {
+    PlayerCommandResult result = mPlayer.repairMod(pModType, repair_cost_for_mod(pModType));
     if (result.mSuccess) {
         (void)save();
     }
@@ -107,20 +126,6 @@ PlayerCommandResult GameSession::buyMod(const ModType pModType, const int pCost)
 
 PlayerCommandResult GameSession::sellLoot(size_t pInventoryIndex) {
     PlayerCommandResult result = mPlayer.sellItem(pInventoryIndex);
-    if (result.mSuccess) {
-        (void)save();
-    }
-
-    return result;
-}
-
-PlayerCommandResult GameSession::repairMod(size_t pInventoryIndex) {
-    const auto& inventory = mPlayer.inventory();
-    const int repairCost =
-        (pInventoryIndex < inventory.size())
-            ? std::max(1, inventory[pInventoryIndex].mValue * game_balance::kRepairCostNumerator / game_balance::kRepairCostDenominator)
-            : 0;
-    PlayerCommandResult result = mPlayer.repairEquipment(pInventoryIndex, repairCost);
     if (result.mSuccess) {
         (void)save();
     }

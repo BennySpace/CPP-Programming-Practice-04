@@ -37,15 +37,15 @@ public:
     [[nodiscard]] const PlayerProfile& player() const;
     [[nodiscard]] const std::vector<std::unique_ptr<Race>>& races() const;
     [[nodiscard]] const Race* activeRace() const;
+    [[nodiscard]] std::optional<size_t> activeRaceIndex() const;
 
     GameCommandResult startRace(size_t pRaceIndex);
     RaceDriveResult driveActiveRace(ModType pModType);
     void leaveRace();
 
     PlayerCommandResult buyFuel();
-    PlayerCommandResult buyMod(ModType pModType, int pCost);
+    PlayerCommandResult repairMod(ModType pModType);
     PlayerCommandResult sellLoot(size_t pInventoryIndex);
-    PlayerCommandResult repairMod(size_t pInventoryIndex);
     PlayerCommandResult donateLoot(size_t pInventoryIndex);
     PlayerCommandResult restart();
 

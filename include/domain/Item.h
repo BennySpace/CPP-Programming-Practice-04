@@ -12,9 +12,23 @@ struct Item {
     std::string mDescription;
     int mDurability;
     bool mIsBroken;
+    bool mIsEquipped;
 
-    Item(std::string pName, const ItemType pType, const int pValue, std::string  pDescription = "", const int pDurability = 0, const bool pIsBroken = false)
-        : mName(std::move(pName)), mType(pType), mValue(pValue), mDescription(std::move(pDescription)), mDurability(pDurability), mIsBroken(pIsBroken) {}
+    Item(
+        std::string pName,
+        const ItemType pType,
+        const int pValue,
+        std::string pDescription = "",
+        const int pDurability = 0,
+        const bool pIsBroken = false,
+        const bool pIsEquipped = false)
+        : mName(std::move(pName)),
+          mType(pType),
+          mValue(pValue),
+          mDescription(std::move(pDescription)),
+          mDurability(pDurability),
+          mIsBroken(pIsBroken),
+          mIsEquipped(pIsEquipped) {}
 };
 
 #endif // ITEM_H

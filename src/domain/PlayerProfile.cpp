@@ -1,40 +1,62 @@
 #include "PlayerProfile.h"
-#include "GameBalance.h"
 #include "DomainText.h"
+#include "GameBalance.h"
 #include "LootCatalog.h"
 #include "PlayerSaveData.h"
 #include <algorithm>
 
 namespace {
+size_t mod_slot_index(const ModType pModType) {
+    switch (pModType) {
+        case ModType::aero_wing:
+            return 0;
+        case ModType::high_power:
+            return 1;
+        case ModType::wet_grip:
+            return 2;
+    }
+
+    return 0;
+}
+
 Item make_default_mod(const ModType pModType) {
     return Item(
         to_code(pModType),
         ItemType::equipment,
-        pModType == ModType::aero_wing
-            ? game_balance::kAeroModCost
-            : (pModType == ModType::high_power ? game_balance::kHighPowerModCost : game_balance::kWetGripModCost),
+        game_balance::mod_cost(pModType),
         to_full_label(pModType),
         100,
-        false);
+        false,
+        true);
 }
 
-std::vector<Item> make_default_inventory() {
+std::array<Item, 3> make_default_mods() {
     return {
         make_default_mod(ModType::aero_wing),
         make_default_mod(ModType::high_power),
         make_default_mod(ModType::wet_grip)
     };
 }
+
+int clamp_to_non_negative(const int pValue) {
+    return std::max(0, pValue);
 }
 
-PlayerProfile::PlayerProfile() : mMoney(game_balance::kStartingMoney), mFuel(game_balance::kStartingFuel) {
-    mInventory = make_default_inventory();
+int clamp_mod_durability(const int pValue) {
+    return std::clamp(pValue, 0, 100);
 }
+}
+
+PlayerProfile::PlayerProfile()
+    : mMoney(game_balance::kStartingMoney),
+      mFuel(game_balance::kStartingFuel),
+      mGarageMods(make_default_mods()) {}
 
 void PlayerProfile::resetProgress() {
     mMoney = game_balance::kStartingMoney;
     mFuel = game_balance::kStartingFuel;
-    mInventory = make_default_inventory();
+    mInventory.clear();
+    mGarageMods = make_default_mods();
     mMuseumCollection.clear();
     mMuseumRewards.clear();
 }
@@ -66,35 +88,21 @@ void PlayerProfile::spendFuel() {
 }
 
 void PlayerProfile::addItem(const Item& pItem) {
-    mInventory.push_back(pItem);
+    if (pItem.mType == ItemType::loot) {
+        mInventory.push_back(pItem);
+    }
 }
 
 bool PlayerProfile::hasMod(const ModType pModType) const {
-    for (const auto& inventoryItem : mInventory) {
-        const auto inventoryModType = normalizeModName(inventoryItem.mName);
-        if (inventoryItem.mType == ItemType::equipment
-            && inventoryModType.has_value()
-            && *inventoryModType == pModType
-            && !inventoryItem.mIsBroken) {
-            return true;
-        }
-    }
-
-    return false;
+    return !garageMod(pModType).mIsBroken;
 }
 
 bool PlayerProfile::hasBrokenMod(const ModType pModType) const {
-    for (const auto& inventoryItem : mInventory) {
-        const auto inventoryModType = normalizeModName(inventoryItem.mName);
-        if (inventoryItem.mType == ItemType::equipment
-            && inventoryModType.has_value()
-            && *inventoryModType == pModType
-            && inventoryItem.mIsBroken) {
-            return true;
-        }
-    }
+    return garageMod(pModType).mIsBroken;
+}
 
-    return false;
+const Item& PlayerProfile::garageMod(const ModType pModType) const {
+    return mGarageMods[mod_slot_index(pModType)];
 }
 
 const std::vector<Item>& PlayerProfile::inventory() const {
@@ -121,38 +129,21 @@ std::vector<size_t> PlayerProfile::lootIndices() const {
     return indices;
 }
 
-std::vector<size_t> PlayerProfile::brokenEquipmentIndices() const {
-    std::vector<size_t> indices;
-
-    for (size_t index = 0; index < mInventory.size(); ++index) {
-        if (mInventory[index].mType == ItemType::equipment && mInventory[index].mIsBroken) {
-            indices.push_back(index);
-        }
-    }
-
-    return indices;
-}
-
 bool PlayerProfile::isGameOver() const {
     return mMoney <= 0 && mFuel <= 0;
 }
 
 bool PlayerProfile::applyModWear(const ModType pModType, const int pWearAmount, int& pDurability, bool& pBroken) {
-    for (auto& inventoryItem : mInventory) {
-        const auto inventoryModType = normalizeModName(inventoryItem.mName);
-        if (inventoryItem.mType == ItemType::equipment
-            && inventoryModType.has_value()
-            && *inventoryModType == pModType
-            && !inventoryItem.mIsBroken) {
-            inventoryItem.mDurability = std::max(0, inventoryItem.mDurability - pWearAmount);
-            inventoryItem.mIsBroken = inventoryItem.mDurability <= 0;
-            pDurability = inventoryItem.mDurability;
-            pBroken = inventoryItem.mIsBroken;
-            return true;
-        }
+    Item& mod = mGarageMods[mod_slot_index(pModType)];
+    if (mod.mIsBroken) {
+        return false;
     }
 
-    return false;
+    mod.mDurability = std::max(0, mod.mDurability - pWearAmount);
+    mod.mIsBroken = mod.mDurability <= 0;
+    pDurability = mod.mDurability;
+    pBroken = mod.mIsBroken;
+    return true;
 }
 
 std::optional<Item> PlayerProfile::removeInventoryItem(const size_t pIndex) {
@@ -220,41 +211,10 @@ PlayerCommandResult PlayerProfile::donateToMuseum(size_t pIndex) {
     return {true, domain_text::kNewExhibitTitle, rewardMessage};
 }
 
-PlayerCommandResult PlayerProfile::buyMod(const ModType pModType, const int pCost) {
-    if (hasMod(pModType)) {
-        return {false, domain_text::kPurchaseBlockedTitle, domain_text::mod_already_installed(modLabel(pModType))};
-    }
+PlayerCommandResult PlayerProfile::repairMod(const ModType pModType, const int pCost) {
+    Item& mod = mGarageMods[mod_slot_index(pModType)];
 
-    if (money() < pCost) {
-        return {false, domain_text::kNotEnoughMoneyTitle, domain_text::earn_more_credits_for_mod(modLabel(pModType))};
-    }
-
-    spendMoney(pCost);
-
-    for (auto& inventoryItem : mInventory) {
-        const auto inventoryModType = normalizeModName(inventoryItem.mName);
-        if (inventoryItem.mType == ItemType::equipment
-            && inventoryModType.has_value()
-            && *inventoryModType == pModType) {
-            inventoryItem.mIsBroken = false;
-            inventoryItem.mDurability = 100;
-            inventoryItem.mValue = pCost;
-            inventoryItem.mDescription = modLabel(pModType);
-            return {true, domain_text::kModPurchasedTitle, domain_text::mod_race_ready_again(modLabel(pModType))};
-        }
-    }
-
-    addItem(Item(to_code(pModType), ItemType::equipment, pCost, to_full_label(pModType), 100, false));
-
-    return {true, domain_text::kModPurchasedTitle, domain_text::mod_added_to_garage(modLabel(pModType))};
-}
-
-PlayerCommandResult PlayerProfile::repairEquipment(size_t pIndex, int pCost) {
-    if (pIndex >= mInventory.size() || mInventory[pIndex].mType != ItemType::equipment) {
-        return {false, domain_text::kRepairFailedTitle, domain_text::repair_choose_damaged()};
-    }
-
-    if (!mInventory[pIndex].mIsBroken) {
+    if (!mod.mIsBroken) {
         return {false, domain_text::kRepairFailedTitle, domain_text::repair_already_working()};
     }
 
@@ -263,19 +223,13 @@ PlayerCommandResult PlayerProfile::repairEquipment(size_t pIndex, int pCost) {
     }
 
     spendMoney(pCost);
-    mInventory[pIndex].mIsBroken = false;
-    mInventory[pIndex].mDurability = game_balance::kRepairRestoreDurability;
-    const auto repairedModType = normalizeModName(mInventory[pIndex].mName);
-    const std::string repairedModLabel = repairedModType.has_value()
-        ? modLabel(*repairedModType)
-        : mInventory[pIndex].mName;
+    mod.mIsBroken = false;
+    mod.mDurability = game_balance::kRepairRestoreDurability;
 
     return {
         true,
         domain_text::kRepairCompleteTitle,
-        domain_text::mod_repaired_for_next_stint(
-            repairedModLabel,
-            mInventory[pIndex].mDurability)
+        domain_text::mod_repaired_for_next_stint(modLabel(pModType), mod.mDurability)
     };
 }
 
@@ -292,13 +246,67 @@ std::string PlayerProfile::lootDescription(const std::string& pLootName) {
 }
 
 PlayerSaveData PlayerProfile::toSaveData() const {
-    return {mMoney, mFuel, mInventory, mMuseumCollection, mMuseumRewards};
+    return {
+        mMoney,
+        mFuel,
+        mInventory,
+        std::vector<Item>(mGarageMods.begin(), mGarageMods.end()),
+        mMuseumCollection,
+        mMuseumRewards
+    };
 }
 
 void PlayerProfile::applySaveData(const PlayerSaveData& pSaveData) {
-    mMoney = pSaveData.mMoney;
-    mFuel = pSaveData.mFuel;
-    mInventory = pSaveData.mInventory;
-    mMuseumCollection = pSaveData.mMuseumCollection;
-    mMuseumRewards = pSaveData.mMuseumRewards;
+    mMoney = clamp_to_non_negative(pSaveData.mMoney);
+    mFuel = clamp_to_non_negative(pSaveData.mFuel);
+    mInventory.clear();
+    for (const auto& item : pSaveData.mInventory) {
+        if (item.mType == ItemType::loot) {
+            Item normalizedItem = item;
+            normalizedItem.mValue = clamp_to_non_negative(normalizedItem.mValue);
+            mInventory.push_back(normalizedItem);
+        }
+    }
+
+    mGarageMods = make_default_mods();
+    for (const auto& savedMod : pSaveData.mGarageMods) {
+        const auto modType = normalizeModName(savedMod.mName);
+        if (!modType.has_value()) {
+            continue;
+        }
+
+        Item normalizedMod = savedMod;
+        normalizedMod.mName = to_code(*modType);
+        normalizedMod.mDescription = to_full_label(*modType);
+        normalizedMod.mType = ItemType::equipment;
+        normalizedMod.mValue = game_balance::mod_cost(*modType);
+        normalizedMod.mDurability = clamp_mod_durability(normalizedMod.mDurability);
+        normalizedMod.mIsBroken = normalizedMod.mDurability <= 0;
+        normalizedMod.mIsEquipped = true;
+        mGarageMods[mod_slot_index(*modType)] = normalizedMod;
+    }
+
+    mMuseumCollection.clear();
+    for (const auto& exhibit : pSaveData.mMuseumCollection) {
+        if (exhibit.mType != ItemType::loot) {
+            continue;
+        }
+
+        Item normalizedExhibit = exhibit;
+        normalizedExhibit.mValue = clamp_to_non_negative(normalizedExhibit.mValue);
+        normalizedExhibit.mDescription = lootDescription(normalizedExhibit.mName);
+        mMuseumCollection.push_back(normalizedExhibit);
+    }
+
+    mMuseumRewards.clear();
+    for (const int milestone : pSaveData.mMuseumRewards) {
+        if (std::find(game_balance::kMuseumMilestones.begin(), game_balance::kMuseumMilestones.end(), milestone)
+            == game_balance::kMuseumMilestones.end()) {
+            continue;
+        }
+
+        if (std::find(mMuseumRewards.begin(), mMuseumRewards.end(), milestone) == mMuseumRewards.end()) {
+            mMuseumRewards.push_back(milestone);
+        }
+    }
 }
