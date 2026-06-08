@@ -71,6 +71,18 @@ private:
     void drawPhotoPlaceholder(const sf::FloatRect& pRect, float pTextScale = 2.4f);
     void drawItemCard(const Item& pItem, const sf::FloatRect& pRect, bool pSelected, bool pMuseumStyle);
     void drawWrapped(const std::string& pText, sf::Vector2f pPosition, float pScale, float pWidth, const sf::Color& pColor);
+    void drawWrappedClamped(
+        const std::string& pText,
+        sf::Vector2f pPosition,
+        float pScale,
+        float pWidth,
+        size_t pMaxLines,
+        const sf::Color& pColor);
+    void drawTextRightAligned(
+        const std::string& pText,
+        sf::Vector2f pPosition,
+        float pScale,
+        const sf::Color& pColor);
     [[nodiscard]] const sf::Texture* trackPreviewTexture(size_t pIndex) const;
     [[nodiscard]] const sf::Texture* trackMapTexture(size_t pIndex) const;
     [[nodiscard]] const sf::Texture* itemTexture(const Item& pItem) const;

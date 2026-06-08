@@ -4,7 +4,57 @@
 #include "text/UiText.h"
 #include "BitmapText.h"
 #include <algorithm>
+#include <vector>
 #include <sstream>
+
+namespace {
+constexpr float kWrappedLineStep = 9.0f;
+
+std::vector<std::string> wrap_lines(const std::string& text, const float scale, const float width) {
+    std::istringstream input(text);
+    std::string word;
+    std::string currentLine;
+    std::vector<std::string> lines;
+
+    while (input >> word) {
+        const std::string candidate = currentLine.empty() ? word : currentLine + " " + word;
+        if (bitmap_text::measure_text(to_upper_copy(candidate), scale) > width && !currentLine.empty()) {
+            lines.push_back(currentLine);
+            currentLine = word;
+        } else {
+            currentLine = candidate;
+        }
+    }
+
+    if (!currentLine.empty()) {
+        lines.push_back(currentLine);
+    }
+
+    return lines;
+}
+
+void clamp_last_line_to_width(std::string& line, const float scale, const float width) {
+    constexpr const char* kEllipsis = "...";
+    if (bitmap_text::measure_text(to_upper_copy(line), scale) <= width) {
+        return;
+    }
+
+    while (!line.empty()) {
+        line.pop_back();
+        while (!line.empty() && line.back() == ' ') {
+            line.pop_back();
+        }
+
+        const std::string candidate = line + kEllipsis;
+        if (bitmap_text::measure_text(to_upper_copy(candidate), scale) <= width) {
+            line = candidate;
+            return;
+        }
+    }
+
+    line = kEllipsis;
+}
+}
 
 void Application::drawPanel(const sf::FloatRect& rect, const sf::Color& fill, const sf::Color& outline, const float outlineThickness) {
     using widget = app_layout::WidgetLayout;
@@ -103,25 +153,46 @@ void Application::drawItemCard(const Item& currentItem, const sf::FloatRect& rec
 }
 
 void Application::drawWrapped(const std::string& text, const sf::Vector2f position, const float scale, const float width, const sf::Color& color) {
-    std::istringstream input(text);
-    std::string word;
-    std::string currentLine;
+    const auto lines = wrap_lines(text, scale, width);
     float currentY = position.y;
 
-    while (input >> word) {
-        const std::string candidate = currentLine.empty() ? word : currentLine + " " + word;
-        if (bitmap_text::measure_text(to_upper_copy(candidate), scale) > width && !currentLine.empty()) {
-            bitmap_text::draw_text(mWindow, currentLine, {position.x, currentY}, scale, color);
-            currentLine = word;
-            currentY += scale * 9.0f;
-        } else {
-            currentLine = candidate;
-        }
+    for (const auto& currentLine : lines) {
+        bitmap_text::draw_text(mWindow, currentLine, {position.x, currentY}, scale, color);
+        currentY += scale * kWrappedLineStep;
+    }
+}
+
+void Application::drawWrappedClamped(
+    const std::string& text,
+    const sf::Vector2f position,
+    const float scale,
+    const float width,
+    const size_t maxLines,
+    const sf::Color& color) {
+    auto lines = wrap_lines(text, scale, width);
+    if (maxLines > 0 && lines.size() > maxLines) {
+        lines.resize(maxLines);
+        clamp_last_line_to_width(lines.back(), scale, width);
     }
 
-    if (!currentLine.empty()) {
+    float currentY = position.y;
+    for (const auto& currentLine : lines) {
         bitmap_text::draw_text(mWindow, currentLine, {position.x, currentY}, scale, color);
+        currentY += scale * kWrappedLineStep;
     }
+}
+
+void Application::drawTextRightAligned(
+    const std::string& text,
+    const sf::Vector2f position,
+    const float scale,
+    const sf::Color& color) {
+    bitmap_text::draw_text(
+        mWindow,
+        text,
+        {position.x - bitmap_text::measure_text(text, scale), position.y},
+        scale,
+        color);
 }
 
 void Application::drawButtons() {

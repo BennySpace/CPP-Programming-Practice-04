@@ -131,9 +131,8 @@ struct StatusBarLayout {
     static constexpr float kSubtitleY = 91.0f;
 
     // Player resource counters in the middle of the status bar.
-    static constexpr float kCreditsX = 760.0f;
+    static constexpr float kCounterRightX = 944.0f;
     static constexpr float kCreditsY = 48.0f;
-    static constexpr float kFuelX = 760.0f;
     static constexpr float kFuelY = 82.0f;
 
     // Notification banner area on the right side of the status bar.

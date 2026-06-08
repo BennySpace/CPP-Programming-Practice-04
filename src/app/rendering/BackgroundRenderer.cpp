@@ -78,17 +78,18 @@ void Application::drawStatusBar() {
     const PlayerProfile& currentPlayer = mGame.player();
 
     // Credits and fuel counters.
-    bitmap_text::draw_text(mWindow, app_text::format_credits(currentPlayer.money()), {layout::kCreditsX, layout::kCreditsY}, 3.0f, sf::Color(255, 223, 126));
-    bitmap_text::draw_text(mWindow, app_text::format_fuel(currentPlayer.fuel()), {layout::kFuelX, layout::kFuelY}, 3.0f, sf::Color(139, 223, 255));
+    drawTextRightAligned(app_text::format_credits(currentPlayer.money()), {layout::kCounterRightX, layout::kCreditsY}, 3.0f, sf::Color(255, 223, 126));
+    drawTextRightAligned(app_text::format_fuel(currentPlayer.fuel()), {layout::kCounterRightX, layout::kFuelY}, 3.0f, sf::Color(139, 223, 255));
 
     const sf::Color bannerColor = mUiState.mBanner.mSuccess ? sf::Color(168, 255, 180) : sf::Color(255, 170, 170);
 
     // Banner title and message shown for transient notifications.
     bitmap_text::draw_text(mWindow, mUiState.mBanner.mTitle, {layout::kBannerTitleX, layout::kBannerTitleY}, 3.0f, bannerColor);
-    drawWrapped(
+    drawWrappedClamped(
         mUiState.mBanner.mMessage,
         {layout::kBannerTextX, layout::kBannerTextY},
         1.55f,
         layout::kBannerTextWidth,
+        2,
         sf::Color(232, 234, 238));
 }
