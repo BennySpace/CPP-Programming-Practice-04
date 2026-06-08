@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.25)
 project(Formula_One_Simulator_2 VERSION 1.0.0 LANGUAGES CXX)
 
+include(GNUInstallDirs)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -130,6 +132,12 @@ if (WIN32)
     )
 endif ()
 
+if (MSVC)
+    set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION ".")
+    set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+    include(InstallRequiredSystemLibraries)
+endif ()
+
 add_custom_command(TARGET Formula_One_Simulator_2 POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_RUNTIME_DLLS:Formula_One_Simulator_2>
@@ -156,4 +164,41 @@ add_custom_command(TARGET Formula_One_Simulator_2 POST_BUILD
         ${CMAKE_SOURCE_DIR}/assets/items
         $<TARGET_FILE_DIR:Formula_One_Simulator_2>/assets/items
     COMMAND_EXPAND_LISTS
+)
+
+install(TARGETS Formula_One_Simulator_2
+    RUNTIME DESTINATION .
+)
+
+if (CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS)
+    install(PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+        DESTINATION .
+    )
+endif ()
+
+install(FILES $<TARGET_RUNTIME_DLLS:Formula_One_Simulator_2>
+    DESTINATION .
+)
+
+install(DIRECTORY ${PROJECT_VCPKG_RUNTIME_BIN_DIR}/
+    DESTINATION .
+    FILES_MATCHING
+    PATTERN "*.dll"
+)
+
+install(DIRECTORY
+    ${CMAKE_SOURCE_DIR}/assets/circuits
+    DESTINATION assets
+)
+
+install(DIRECTORY
+    ${CMAKE_SOURCE_DIR}/assets/items
+    DESTINATION assets
+)
+
+add_custom_target(portable_release
+    COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --prefix ${CMAKE_INSTALL_PREFIX} --config $<CONFIG>
+    DEPENDS Formula_One_Simulator_2
+    USES_TERMINAL
+    COMMENT "Building portable Windows package in ${CMAKE_INSTALL_PREFIX}"
 )

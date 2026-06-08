@@ -23,6 +23,7 @@
       "binaryDir": "${sourceDir}/out/build/x64-Release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/windows-release-portable",
         "VCPKG_INSTALLED_DIR": "${sourceDir}/external"
       }
     }
