@@ -17,7 +17,7 @@ endif ()
 set(SFML_DIR "${PROJECT_VCPKG_INSTALLED_DIR}/x64-windows/share/sfml")
 set(nlohmann_json_DIR "${PROJECT_VCPKG_INSTALLED_DIR}/x64-windows/share/nlohmann_json")
 
-find_package(SFML CONFIG REQUIRED COMPONENTS Graphics Window System)
+find_package(SFML CONFIG REQUIRED COMPONENTS Graphics Window System Main)
 find_package(nlohmann_json CONFIG REQUIRED)
 
 set(PROJECT_VCPKG_RUNTIME_BIN_DIR "${PROJECT_VCPKG_INSTALLED_DIR}/x64-windows/bin")
@@ -126,10 +126,7 @@ target_link_libraries(Formula_One_Simulator_2 PRIVATE SFML::Graphics SFML::Windo
 target_link_libraries(Formula_One_Simulator_2 PRIVATE nlohmann_json::nlohmann_json)
 
 if (WIN32)
-    target_link_libraries(Formula_One_Simulator_2 PRIVATE
-        debug "${PROJECT_VCPKG_INSTALLED_DIR}/x64-windows/debug/lib/manual-link/sfml-main-d.lib"
-        optimized "${PROJECT_VCPKG_INSTALLED_DIR}/x64-windows/lib/manual-link/sfml-main.lib"
-    )
+    target_link_libraries(Formula_One_Simulator_2 PRIVATE SFML::Main)
 endif ()
 
 if (MSVC)
