@@ -3,6 +3,7 @@
 #include "DomainText.h"
 #include "text/UiText.h"
 #include "PlayerSaveRepository.h"
+#include "PlayerSaveData.h"
 #include "RaceFactory.h"
 #include <algorithm>
 
@@ -14,8 +15,18 @@ int repair_cost_for_mod(const ModType pModType) {
 }
 
 GameSession::GameSession() {
-    const PlayerSaveLoadStatus loadStatus = PlayerSaveRepository::load(mPlayer, mSaveFile);
     mRaces = race_factory::create_default_races();
+    PlayerSaveData loadedData;
+    const PlayerSaveLoadStatus loadStatus = PlayerSaveRepository::load(loadedData, mSaveFile);
+
+    if (loadStatus == PlayerSaveLoadStatus::success) {
+        mPlayer.applySaveData(loadedData);
+
+        if (loadedData.mActiveRaceIndex >= 0
+            && loadedData.mActiveRaceIndex < static_cast<int>(mRaces.size())) {
+            mActiveRaceIndex = loadedData.mActiveRaceIndex;
+        }
+    }
 
     if (loadStatus == PlayerSaveLoadStatus::invalid_data) {
         mPendingAlert = {false, app_text::kBannerLoadFailedTitle, app_text::load_invalid_message()};
@@ -150,7 +161,9 @@ PlayerCommandResult GameSession::restart() {
 }
 
 bool GameSession::save() {
-    const PlayerSaveWriteStatus saveStatus = PlayerSaveRepository::save(mPlayer, mSaveFile);
+    PlayerSaveData saveData = mPlayer.toSaveData();
+    saveData.mActiveRaceIndex = mActiveRaceIndex;
+    const PlayerSaveWriteStatus saveStatus = PlayerSaveRepository::save(saveData, mSaveFile);
     if (saveStatus != PlayerSaveWriteStatus::success) {
         mPendingAlert = {false, app_text::kBannerSaveFailedTitle, app_text::save_failed_message()};
         return false;

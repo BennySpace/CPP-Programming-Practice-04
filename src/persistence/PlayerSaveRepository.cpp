@@ -1,6 +1,5 @@
 #include "PlayerSaveRepository.h"
 #include "PlayerSaveCodec.h"
-#include "PlayerProfile.h"
 #include "nlohmann/json.hpp"
 #include <filesystem>
 #include <fstream>
@@ -28,9 +27,9 @@ bool replace_file(const std::string& pSource, const std::string& pDestination) {
 }
 }
 
-PlayerSaveWriteStatus PlayerSaveRepository::save(const PlayerProfile& pPlayer, const std::string& pFilename) {
+PlayerSaveWriteStatus PlayerSaveRepository::save(const PlayerSaveData& pSaveData, const std::string& pFilename) {
     json saveData;
-    if (!PlayerSaveCodec::encode(pPlayer.toSaveData(), saveData)) {
+    if (!PlayerSaveCodec::encode(pSaveData, saveData)) {
         return PlayerSaveWriteStatus::encode_error;
     }
 
@@ -61,7 +60,7 @@ PlayerSaveWriteStatus PlayerSaveRepository::save(const PlayerProfile& pPlayer, c
     }
 }
 
-PlayerSaveLoadStatus PlayerSaveRepository::load(PlayerProfile& pPlayer, const std::string& pFilename) {
+PlayerSaveLoadStatus PlayerSaveRepository::load(PlayerSaveData& pSaveData, const std::string& pFilename) {
     std::ifstream file(pFilename);
     if (!file.is_open()) {
         return std::filesystem::exists(pFilename)
@@ -78,7 +77,7 @@ PlayerSaveLoadStatus PlayerSaveRepository::load(PlayerProfile& pPlayer, const st
             return PlayerSaveLoadStatus::invalid_data;
         }
 
-        pPlayer.applySaveData(loadedData);
+        pSaveData = loadedData;
     } catch (const json::exception&) {
         return PlayerSaveLoadStatus::invalid_data;
     } catch (const std::exception&) {

@@ -94,6 +94,7 @@ bool PlayerSaveCodec::encode(const PlayerSaveData& pSaveData, json& pOutput) {
     pOutput = json::object();
     pOutput["money"] = pSaveData.mMoney;
     pOutput["fuel"] = pSaveData.mFuel;
+    pOutput["activeRaceIndex"] = pSaveData.mActiveRaceIndex;
     pOutput["inventory"] = json::array();
 
     for (const auto& inventoryItem : pSaveData.mInventory) {
@@ -133,6 +134,7 @@ bool PlayerSaveCodec::decode(const json& pInput, PlayerSaveData& pOutput) {
     PlayerSaveData loadedData;
     loadedData.mMoney = clamp_to_non_negative(pInput.value("money", game_balance::kStartingMoney));
     loadedData.mFuel = clamp_to_non_negative(pInput.value("fuel", game_balance::kStartingFuel));
+    loadedData.mActiveRaceIndex = std::max(-1, pInput.value("activeRaceIndex", -1));
 
     for (const auto& itemJson : pInput.value("inventory", json::array())) {
         Item loadedItem("", ItemType::loot, 0);

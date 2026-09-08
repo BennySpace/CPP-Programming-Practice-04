@@ -11,6 +11,7 @@ struct PlayerSaveData {
     std::vector<Item> mGarageMods;
     std::vector<Item> mMuseumCollection;
     std::vector<int> mMuseumRewards;
+    int mActiveRaceIndex = -1;
 };
 
 #endif // PLAYER_SAVE_DATA_H

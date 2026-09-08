@@ -3,7 +3,7 @@
 
 #include <string>
 
-class PlayerProfile;
+struct PlayerSaveData;
 
 enum class PlayerSaveLoadStatus {
     success,
@@ -20,8 +20,8 @@ enum class PlayerSaveWriteStatus {
 
 class PlayerSaveRepository {
 public:
-    [[nodiscard]] static PlayerSaveWriteStatus save(const PlayerProfile& pPlayer, const std::string& pFilename);
-    [[nodiscard]] static PlayerSaveLoadStatus load(PlayerProfile& pPlayer, const std::string& pFilename);
+    [[nodiscard]] static PlayerSaveWriteStatus save(const PlayerSaveData& pSaveData, const std::string& pFilename);
+    [[nodiscard]] static PlayerSaveLoadStatus load(PlayerSaveData& pSaveData, const std::string& pFilename);
 };
 
 #endif // PLAYER_SAVE_REPOSITORY_H
