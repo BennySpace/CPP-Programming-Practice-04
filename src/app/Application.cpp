@@ -110,6 +110,7 @@ void Application::refreshScreenInteractions() {
 #ifndef NDEBUG
             return mDebugLayoutEditor.rectOverride(pName).value_or(pFallbackRect);
 #else
+            (void)pName;
             return pFallbackRect;
 #endif
         });
