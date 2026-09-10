@@ -12,8 +12,4 @@ enum class ItemType {
     return pItemType == ItemType::equipment ? "equipment" : "loot";
 }
 
-[[nodiscard]] inline ItemType item_type_from_string(const std::string& pValue) {
-    return pValue == "equipment" ? ItemType::equipment : ItemType::loot;
-}
-
 #endif // ITEM_TYPE_H
