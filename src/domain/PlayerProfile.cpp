@@ -261,11 +261,9 @@ void PlayerProfile::applySaveData(const PlayerSaveData& pSaveData) {
     mFuel = clamp_to_non_negative(pSaveData.mFuel);
     mInventory.clear();
     for (const auto& item : pSaveData.mInventory) {
-        if (item.mType == ItemType::loot) {
-            Item normalizedItem = item;
-            normalizedItem.mValue = clamp_to_non_negative(normalizedItem.mValue);
-            mInventory.push_back(normalizedItem);
-        }
+        Item normalizedItem = item;
+        normalizedItem.mValue = clamp_to_non_negative(normalizedItem.mValue);
+        mInventory.push_back(normalizedItem);
     }
 
     mGarageMods = make_default_mods();
@@ -288,10 +286,6 @@ void PlayerProfile::applySaveData(const PlayerSaveData& pSaveData) {
 
     mMuseumCollection.clear();
     for (const auto& exhibit : pSaveData.mMuseumCollection) {
-        if (exhibit.mType != ItemType::loot) {
-            continue;
-        }
-
         Item normalizedExhibit = exhibit;
         normalizedExhibit.mValue = clamp_to_non_negative(normalizedExhibit.mValue);
         normalizedExhibit.mDescription = lootDescription(normalizedExhibit.mName);

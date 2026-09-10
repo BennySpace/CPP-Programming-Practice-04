@@ -1,8 +1,6 @@
 #include "PlayerSaveCodec.h"
-#include "GameBalance.h"
 #include "ItemType.h"
 #include "ModType.h"
-#include "PlayerProfile.h"
 #include <algorithm>
 #include <optional>
 #include <string>
@@ -59,12 +57,20 @@ bool encode_item(const Item& pItem, json& pOutput) {
 }
 
 bool decode_item(const json& pInput, Item& pOutput) {
-    const auto type = parse_item_type(pInput.value("type", ""));
+    if (!pInput.is_object()
+        || !pInput.contains("name") || !pInput.at("name").is_string()
+        || !pInput.contains("type") || !pInput.at("type").is_string()
+        || !pInput.contains("value") || !pInput.at("value").is_number_integer()
+        || !pInput.contains("description") || !pInput.at("description").is_string()) {
+        return false;
+    }
+
+    const auto type = parse_item_type(pInput.at("type").get<std::string>());
     if (!type.has_value()) {
         return false;
     }
 
-    std::string loadedName = pInput.value("name", "");
+    std::string loadedName = pInput.at("name").get<std::string>();
     if (*type == ItemType::equipment) {
         const auto modType = try_mod_type_from_code(loadedName);
         if (!modType.has_value()) {
@@ -77,13 +83,19 @@ bool decode_item(const json& pInput, Item& pOutput) {
     pOutput = Item(
         loadedName,
         *type,
-        clamp_to_non_negative(pInput.value("value", 0)),
-        pInput.value("description", ""));
+        clamp_to_non_negative(pInput.at("value").get<int>()),
+        pInput.at("description").get<std::string>());
 
     if (*type == ItemType::equipment) {
-        pOutput.mDurability = clamp_mod_durability(pInput.value("durability", 100));
-        pOutput.mIsBroken = pOutput.mDurability <= 0 || pInput.value("isBroken", false);
-        pOutput.mIsEquipped = pInput.value("isEquipped", false);
+        if (!pInput.contains("durability") || !pInput.at("durability").is_number_integer()
+            || !pInput.contains("isBroken") || !pInput.at("isBroken").is_boolean()
+            || !pInput.contains("isEquipped") || !pInput.at("isEquipped").is_boolean()) {
+            return false;
+        }
+
+        pOutput.mDurability = clamp_mod_durability(pInput.at("durability").get<int>());
+        pOutput.mIsBroken = pOutput.mDurability <= 0 || pInput.at("isBroken").get<bool>();
+        pOutput.mIsEquipped = pInput.at("isEquipped").get<bool>();
     }
 
     return true;
@@ -131,43 +143,57 @@ bool PlayerSaveCodec::encode(const PlayerSaveData& pSaveData, json& pOutput) {
 }
 
 bool PlayerSaveCodec::decode(const json& pInput, PlayerSaveData& pOutput) {
-    PlayerSaveData loadedData;
-    loadedData.mMoney = clamp_to_non_negative(pInput.value("money", game_balance::kStartingMoney));
-    loadedData.mFuel = clamp_to_non_negative(pInput.value("fuel", game_balance::kStartingFuel));
-    loadedData.mActiveRaceIndex = std::max(-1, pInput.value("activeRaceIndex", -1));
+    if (!pInput.is_object()
+        || !pInput.contains("money") || !pInput.at("money").is_number_integer()
+        || !pInput.contains("fuel") || !pInput.at("fuel").is_number_integer()
+        || !pInput.contains("activeRaceIndex") || !pInput.at("activeRaceIndex").is_number_integer()
+        || !pInput.contains("inventory") || !pInput.at("inventory").is_array()
+        || !pInput.contains("mods") || !pInput.at("mods").is_array()
+        || !pInput.contains("museum") || !pInput.at("museum").is_array()
+        || !pInput.contains("museumRewards") || !pInput.at("museumRewards").is_array()) {
+        return false;
+    }
 
-    for (const auto& itemJson : pInput.value("inventory", json::array())) {
+    PlayerSaveData loadedData;
+    loadedData.mMoney = clamp_to_non_negative(pInput.at("money").get<int>());
+    loadedData.mFuel = clamp_to_non_negative(pInput.at("fuel").get<int>());
+    loadedData.mActiveRaceIndex = std::max(-1, pInput.at("activeRaceIndex").get<int>());
+
+    for (const auto& itemJson : pInput.at("inventory")) {
         Item loadedItem("", ItemType::loot, 0);
-        if (!decode_item(itemJson, loadedItem)) {
+        if (!decode_item(itemJson, loadedItem) || loadedItem.mType != ItemType::loot) {
             return false;
         }
 
         loadedData.mInventory.push_back(loadedItem);
     }
 
-    for (const auto& itemJson : pInput.value("mods", json::array())) {
+    for (const auto& itemJson : pInput.at("mods")) {
         Item loadedMod("", ItemType::loot, 0);
-        if (!decode_item(itemJson, loadedMod)) {
+        if (!decode_item(itemJson, loadedMod) || loadedMod.mType != ItemType::equipment) {
             return false;
         }
 
         loadedData.mGarageMods.push_back(loadedMod);
     }
 
-    for (const auto& exhibitJson : pInput.value("museum", json::array())) {
-        const auto type = parse_item_type(exhibitJson.value("type", ""));
-        if (!type.has_value()) {
+    for (const auto& exhibitJson : pInput.at("museum")) {
+        Item loadedExhibit("", ItemType::loot, 0);
+        if (!decode_item(exhibitJson, loadedExhibit) || loadedExhibit.mType != ItemType::loot) {
             return false;
         }
 
-        loadedData.mMuseumCollection.push_back(Item(
-            exhibitJson.value("name", ""),
-            *type,
-            clamp_to_non_negative(exhibitJson.value("value", 0)),
-            exhibitJson.value("description", PlayerProfile::lootDescription(exhibitJson.value("name", "")))));
+        loadedData.mMuseumCollection.push_back(loadedExhibit);
     }
 
-    loadedData.mMuseumRewards = pInput.value("museumRewards", std::vector<int>{});
+    for (const auto& rewardJson : pInput.at("museumRewards")) {
+        if (!rewardJson.is_number_integer()) {
+            return false;
+        }
+
+        loadedData.mMuseumRewards.push_back(rewardJson.get<int>());
+    }
+
     pOutput = loadedData;
     return true;
 }
