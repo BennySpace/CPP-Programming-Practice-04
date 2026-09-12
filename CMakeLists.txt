@@ -14,8 +14,7 @@ if (DEFINED VCPKG_INSTALLED_DIR AND NOT VCPKG_INSTALLED_DIR STREQUAL "")
     set(PROJECT_VCPKG_INSTALLED_DIR "${VCPKG_INSTALLED_DIR}")
 endif ()
 
-set(SFML_DIR "${PROJECT_VCPKG_INSTALLED_DIR}/x64-windows/share/sfml")
-set(nlohmann_json_DIR "${PROJECT_VCPKG_INSTALLED_DIR}/x64-windows/share/nlohmann_json")
+list(APPEND CMAKE_PREFIX_PATH "${PROJECT_VCPKG_INSTALLED_DIR}/x64-windows")
 
 find_package(SFML CONFIG REQUIRED COMPONENTS Graphics Window System Main)
 find_package(nlohmann_json CONFIG REQUIRED)
