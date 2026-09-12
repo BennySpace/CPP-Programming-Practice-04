@@ -1,0 +1,315 @@
+@startuml
+title Диаграмма классов
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+hide empty members
+
+package "Домен: игровая сессия" #ECF9EE {
+  class GameSession {
+    - mPlayer: PlayerProfile
+    - mRaces: vector~unique_ptr<Race>~
+    - mSaveFile: const string = "savegame.json"
+    - mActiveRaceIndex: int = -1
+    - mPendingAlert: optional~SessionAlert~
+    + GameSession()
+    + player(): PlayerProfile&
+    + player() const: const PlayerProfile&
+    + races() const: const vector~unique_ptr<Race>~&
+    + activeRace() const: const Race*
+    + activeRaceIndex() const: optional~size_t~
+    + startRace(index: size_t): GameCommandResult
+    + driveActiveRace(mod: ModType): RaceDriveResult
+    + leaveRace(): void
+    + buyFuel(): PlayerCommandResult
+    + repairMod(mod: ModType): PlayerCommandResult
+    + sellLoot(index: size_t): PlayerCommandResult
+    + donateLoot(index: size_t): PlayerCommandResult
+    + restart(): PlayerCommandResult
+    + save(): bool
+    + consumePendingAlert(): optional~SessionAlert~
+  }
+
+  class PlayerProfile {
+    - mMoney: int
+    - mFuel: int
+    - mInventory: vector~Item~
+    - mGarageMods: array~Item, 3~
+    - mMuseumCollection: vector~Item~
+    - mMuseumRewards: vector~int~
+    + PlayerProfile()
+    + resetProgress(): void
+    + money() const: int
+    + fuel() const: int
+    + addMoney(amount: int): void
+    + spendMoney(amount: int): void
+    + addFuel(amount: int): void
+    + spendFuel(): void
+    + addItem(item: Item): void
+    + hasMod(mod: ModType) const: bool
+    + hasBrokenMod(mod: ModType) const: bool
+    + garageMod(mod: ModType) const: const Item&
+    + inventory() const: const vector~Item~&
+    + museumCollection() const: const vector~Item~&
+    + museumRewards() const: const vector~int~&
+    + lootIndices() const: vector~size_t~
+    + isGameOver() const: bool
+    + applyModWear(mod, amount, durability, broken): bool
+    + removeInventoryItem(index: size_t): optional~Item~
+    + sellItem(index: size_t): PlayerCommandResult
+    + donateToMuseum(index: size_t): PlayerCommandResult
+    + repairMod(mod: ModType, cost: int): PlayerCommandResult
+    + {static} normalizeModName(name: string): optional~ModType~
+    + {static} modLabel(mod: ModType): string
+    + {static} lootDescription(name: string): string
+    + toSaveData() const: PlayerSaveData
+    + applySaveData(data: PlayerSaveData): void
+  }
+
+  class Item <<entity>> {
+    + mName: string
+    + mType: ItemType
+    + mValue: int
+    + mDescription: string
+    + mDurability: int
+    + mIsBroken: bool
+    + mIsEquipped: bool
+    + Item(name, type, value, description, durability, isBroken, isEquipped)
+  }
+
+  enum ItemType {
+    loot
+    equipment
+  }
+
+  enum ModType {
+    aero_wing
+    high_power
+    wet_grip
+  }
+
+  class GameCommandResult <<result>> {
+    + mSuccess: bool = false
+    + mHighlightSuccess: bool = false
+    + mTitle: string
+    + mMessage: string
+  }
+
+  class PlayerCommandResult <<result>> {
+    + mSuccess: bool = false
+    + mTitle: string
+    + mMessage: string
+  }
+
+  class SessionAlert <<result>> {
+    + mSuccess: bool = false
+    + mTitle: string
+    + mMessage: string
+  }
+}
+
+package "Домен: гонки и конфигурация" #EAF3FF {
+  abstract class Race {
+    # mName: string
+    # mCircuitType: string
+    # mFee: int
+    # mRandomNumberGenerator: mt19937
+    # perform_drive(player, mod, wearChance, wearAmount, ...): RaceDriveResult
+    + Race(name: string, circuitType: string, fee: int)
+    + {abstract} drive(player: PlayerProfile&, mod: ModType): RaceDriveResult
+    + {abstract} apply_entry_effect(player: PlayerProfile&): RaceEntryResult
+    + {abstract} get_intro_text() const: string
+    + {abstract} get_strategy_text() const: string
+    + {abstract} get_best_mod_text() const: string
+    + get_name() const: string
+    + get_circuit_type() const: string
+    + get_fee() const: int
+  }
+
+  class "CatalogRace\n(анонимное пространство имён)" as CatalogRace <<final>> {
+    - mConfig: RaceConfig
+    + CatalogRace(config: RaceConfig)
+    + drive(player: PlayerProfile&, mod: ModType): RaceDriveResult
+    + apply_entry_effect(player: PlayerProfile&): RaceEntryResult
+    + get_intro_text() const: string
+    + get_strategy_text() const: string
+    + get_best_mod_text() const: string
+  }
+
+  class RaceConfig <<value object>> {
+    + mDefinition: const RaceDefinition*
+    + mDriveBalance: DriveBalance
+    + mEntryEventChance: int
+    + mEntryEventType: EntryEventType
+  }
+
+  class RaceDefinition <<catalog entry>> {
+    + mName: const char*
+    + mCircuitType: const char*
+    + mEntryFee: int
+    + mIntroText: const char*
+    + mStrategyText: const char*
+    + mBestModText: const char*
+    + mBaseEventText: const char*
+    + mPenaltyText: const char*
+    + mMoneyPenalty: int
+    + mFuelPenalty: int
+    + mLootLossPrefix: const char*
+    + mLootNames: array~const char*, 3~
+  }
+
+  class DriveBalance <<value object>> {
+    + mModWearChance: int
+    + mWearAmount: int
+    + mLootChances: LootChances
+  }
+
+  class LootChances <<value object>> {
+    + mAeroWing: int
+    + mHighPower: int
+    + mWetGrip: int
+  }
+
+  enum EntryEventType {
+    money_penalty
+    fuel_penalty
+    loot_loss
+  }
+
+  class RaceDriveResult <<result>> {
+    + mSuccess: bool = false
+    + mFoundLoot: bool = false
+    + mModWorn: bool = false
+    + mModBroken: bool = false
+    + mDurability: int = 0
+    + mTitle: string
+    + mMessage: string
+    + mLootName: string
+  }
+
+  class RaceEntryResult <<result>> {
+    + mPenaltyApplied: bool = false
+    + mMoneyPenalty: int = 0
+    + mFuelPenalty: int = 0
+    + mIntro: string
+    + mEventText: string
+  }
+
+  class RaceFactory <<factory>> {
+    + {static} create_default_races(): vector~unique_ptr<Race>~
+  }
+
+  class LootDefinition <<catalog entry>> {
+    + mName: const char*
+    + mValue: int
+    + mDescription: const char*
+    + mTextureIndex: size_t
+  }
+
+  class "race_catalog" as RaceCatalog <<namespace>> {
+    + {static} kMonaco: RaceDefinition
+    + {static} kSpa: RaceDefinition
+    + {static} kMonza: RaceDefinition
+  }
+
+  class "loot_catalog" as LootCatalog <<namespace>> {
+    + {static} find_definition(name): const LootDefinition*
+    + {static} description_for(name): string
+    + {static} make_loot_item(name): Item
+  }
+
+  class "game_balance" as GameBalance <<namespace>> {
+    + {static} kStartingMoney: int = 300
+    + {static} kStartingFuel: int = 8
+    + {static} kFuelPackageCost: int = 40
+    + {static} kFuelPackageUnits: int = 6
+    + {static} kMuseumMilestones: array~int, 3~
+    + {static} kMuseumRewards: array~int, 3~
+    + {static} mod_cost(mod: ModType): int
+  }
+}
+
+package "Сохранение" #FFF6DF {
+  class PlayerSaveData <<DTO>> {
+    + mMoney: int = 0
+    + mFuel: int = 0
+    + mInventory: vector~Item~
+    + mGarageMods: vector~Item~
+    + mMuseumCollection: vector~Item~
+    + mMuseumRewards: vector~int~
+    + mActiveRaceIndex: int = -1
+  }
+
+  class PlayerSaveRepository <<repository>> {
+    + {static} save(data: PlayerSaveData, filename: string): PlayerSaveWriteStatus
+    + {static} load(data: PlayerSaveData, filename: string): PlayerSaveLoadStatus
+  }
+
+  class PlayerSaveCodec <<codec>> {
+    + {static} encode(data: PlayerSaveData, output: json): bool
+    + {static} decode(input: json, output: PlayerSaveData): bool
+  }
+
+  enum PlayerSaveLoadStatus {
+    success
+    missing_file
+    invalid_data
+    io_error
+  }
+
+  enum PlayerSaveWriteStatus {
+    success
+    encode_error
+    io_error
+  }
+}
+
+' Владеющие связи и коллекции
+GameSession *-- "1" PlayerProfile : mPlayer
+GameSession *-- "3" Race : mRaces
+PlayerProfile *-- "0..*" Item : mInventory
+PlayerProfile *-- "3" Item : mGarageMods
+PlayerProfile *-- "0..*" Item : mMuseumCollection
+PlayerSaveData o-- "0..*" Item : inventory / mods / museum
+Race <|-- CatalogRace
+CatalogRace *-- "1" RaceConfig
+RaceConfig --> "1" RaceDefinition
+RaceConfig *-- "1" DriveBalance
+DriveBalance *-- "1" LootChances
+RaceCatalog *-- "3" RaceDefinition
+LootCatalog *-- "9" LootDefinition
+
+' Зависимости поведения и передачи данных
+Item --> ItemType
+PlayerProfile ..> ModType
+Race ..> ModType
+Race --> PlayerProfile : изменяет топливо, моды и loot
+Race ..> RaceDriveResult
+Race ..> RaceEntryResult
+GameSession ..> GameCommandResult
+GameSession ..> PlayerCommandResult
+GameSession ..> SessionAlert
+GameSession ..> RaceFactory : создаёт гонки
+RaceFactory ..> CatalogRace : создаёт
+CatalogRace ..> LootCatalog : создаёт добычу
+PlayerProfile ..> LootCatalog : описание экспоната
+PlayerProfile ..> GameBalance : цены и milestones
+GameSession ..> GameBalance : стоимость ремонта
+GameSession ..> PlayerSaveData : сохраняет activeRaceIndex
+PlayerProfile ..> PlayerSaveData : экспорт / импорт
+GameSession ..> PlayerSaveRepository : load / save
+PlayerSaveRepository ..> PlayerSaveCodec : JSON
+PlayerSaveRepository ..> PlayerSaveLoadStatus
+PlayerSaveRepository ..> PlayerSaveWriteStatus
+PlayerSaveCodec ..> PlayerSaveData
+
+legend bottom
+  <b>Обозначения</b>
+  <b>*--</b> композиция / владение объектом; <b>o--</b> агрегирование;
+  <b>--></b> ассоциация; <b>..></b> зависимость.
+  <b>CatalogRace</b> и <b>RaceConfig</b> определены в анонимном пространстве имён
+  файла src/domain/RaceFactory.cpp, но являются частью фактической модели выполнения.
+endlegend
+@enduml

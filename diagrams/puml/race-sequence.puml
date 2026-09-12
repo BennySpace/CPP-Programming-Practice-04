@@ -1,0 +1,67 @@
+@startuml
+title Seqeunce-диаграмма прохождения гонки
+autonumber
+skinparam shadowing false
+
+actor Игрок
+participant "Application" as App
+participant "CommandCoordinator" as Coordinator
+participant "GameSession" as Session
+participant "PlayerProfile" as Profile
+participant "Race" as Race
+participant "PlayerSaveRepository" as Repository
+database "savegame.json" as File
+
+== Старт гонки ==
+Игрок -> App : выбрать трассу и «Start race»
+App -> Coordinator : execute_app_command(start_race)
+Coordinator -> Session : startRace(selectedRace)
+Session -> Session : проверить индекс и отсутствие\nактивной гонки
+Session -> Profile : money(), fuel()
+
+alt недостаточно кредитов или топлива
+  Session --> Coordinator : GameCommandResult(false)
+  Coordinator --> App : баннер ошибки + feedback
+  App --> Игрок : показать причину отказа
+else условия выполнены
+  Session -> Profile : spendMoney(fee)
+  Session -> Race : apply_entry_effect(profile)
+  opt случайное событие трассы
+    Race -> Profile : списать деньги / топливо\nили удалить loot
+  end
+  Session -> Repository : save(PlayerSaveData)
+  Repository -> File : записать .tmp и атомарно заменить
+  Session --> Coordinator : GameCommandResult(true)
+  Coordinator --> App : баннер + feedback
+end
+
+== Прохождение сектора ==
+Игрок -> App : выбрать модификацию
+App -> Coordinator : execute_app_command(drive_*)
+Coordinator -> Session : driveActiveRace(mod)
+Session -> Profile : fuel()
+
+alt нет активной гонки или топлива
+  Session --> Coordinator : RaceDriveResult(false)
+else заезд доступен
+  Session -> Race : drive(profile, mod)
+  Race -> Profile : hasMod(mod)
+  alt модификация отсутствует или сломана
+    Race --> Session : RaceDriveResult(false)
+  else модификация доступна
+    Race -> Profile : spendFuel()
+    opt выпал износ
+      Race -> Profile : applyModWear(mod, amount)
+    end
+    opt выпала добыча
+      Race -> Profile : addItem(loot)
+    end
+    Race --> Session : RaceDriveResult
+    Session -> Repository : save(PlayerSaveData)
+    Repository -> File : атомарно сохранить JSON
+  end
+  Session --> Coordinator : RaceDriveResult
+end
+Coordinator --> App : баннер + feedback
+App --> Игрок : обновить экран гонки
+@enduml

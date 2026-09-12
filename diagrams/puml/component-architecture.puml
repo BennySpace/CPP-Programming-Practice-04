@@ -1,0 +1,65 @@
+@startuml
+title Компонентная архитектура
+left to right direction
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor "Игрок" as Player
+
+package "Презентационный слой" #EAF3FF {
+  [Application\nглавный цикл SFML] as App
+  [Event / Input Handling] as Input
+  [ScreenInteractions\nкнопки и области выбора] as Interactions
+  [CommandCoordinator] as Coordinator
+  [ScreenNavigation] as Navigation
+  [Renderers\nменю, гонка, гараж, музей] as Renderers
+  [AssetManager] as Assets
+  [ApplicationState] as UiState
+}
+
+package "Доменный слой" #ECF9EE {
+  [GameSession\nфасад игровой логики] as Session
+  [PlayerProfile\nресурсы и коллекции] as Profile
+  [Race / CatalogRace\nправила трасс] as Race
+  [RaceFactory + Catalogs\nконфигурация гонок] as Factory
+}
+
+package "Сохранение" #FFF6DF {
+  [PlayerSaveRepository\nфайловый доступ] as Repository
+  [PlayerSaveCodec\nJSON-кодирование] as Codec
+  database "savegame.json" as SaveFile
+}
+
+cloud "SFML" as SFML
+cloud "nlohmann/json" as Json
+folder "assets/" as AssetFiles
+
+Player --> App : мышь / клавиатура
+App --> Input : события окна
+Input --> Interactions : определить команду
+Interactions --> Coordinator : AppCommand
+Coordinator --> Navigation : команды переходов
+Coordinator --> Session : игровые команды
+App --> UiState : читает / обновляет
+App --> Renderers : отрисовка
+Renderers --> UiState
+Renderers --> Session : состояние игрока и гонок
+App --> Assets
+Assets --> AssetFiles
+App ..> SFML : окно, графика
+
+Session *--> Profile
+Session *--> Race : 3 трассы
+Session --> Factory : создаёт при старте
+Session --> Repository : load / save
+Repository --> Codec
+Codec ..> Json
+Repository --> SaveFile : JSON
+
+note bottom of Session
+  Точка входа доменной логики:
+  старт заезда, сектор, гараж,
+  музей, перезапуск и сохранение.
+end note
+@enduml
